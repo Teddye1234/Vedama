@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   Property, Transaction, Tenant, Landlord, ServiceProvider, 
-  ServiceRequest, CommunicationLog, AuditLog, Voucher, LedgerEntry 
+  ServiceRequest, CommunicationLog, AuditLog, Voucher, LedgerEntry, Client 
 } from '../types';
 import { 
   mockProperties, mockTransactions, mockTenants, mockLandlords, 
@@ -21,6 +21,7 @@ interface DataState {
   ledger: LedgerEntry[];
   communicationLogs: CommunicationLog[];
   auditLogs: AuditLog[];
+  clients: Client[];
   
   // Bank Link states
   bankSyncStatus: 'connected' | 'disconnected';
@@ -41,6 +42,11 @@ interface DataState {
   
   addTenant: (tenant: Tenant) => void;
   updateTenant: (id: string, updates: Partial<Tenant>) => void;
+
+  addLandlord: (landlord: Landlord) => void;
+  updateLandlord: (id: string, updates: Partial<Landlord>) => void;
+  addClient: (client: Client) => void;
+  updateClient: (id: string, updates: Partial<Client>) => void;
   
   addProperty: (property: Property) => void;
   updateProperty: (id: string, updates: Partial<Property>) => void;
@@ -54,6 +60,8 @@ interface DataState {
   runEndOfMonthProcess: () => void;
   processMonthlyLandlordVouchers: () => void;
   approveAndReleaseLandlordVoucher: (id: string, releaseOfficer: string) => void;
+  releaseGenericVoucherToBank: (id: string, releaseOfficer: string) => void;
+  sendRentReminder: (tenantId: string) => void;
   confirmWorkCompletion: (id: string, party: 'tenant' | 'landlord') => void;
 }
 
@@ -70,8 +78,27 @@ export const useDataStore = create<DataState>()(
         return p;
       }),
       transactions: mockTransactions,
-      tenants: mockTenants,
-      landlords: mockLandlords,
+      tenants: mockTenants.map((t) => {
+        if (t.id === 'ten1') return { ...t, avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', address: 'Malindi Oceanview Estate, Unit A1', otherInfo: 'ID No: 35678901, Lease type: Residential 1-year' };
+        if (t.id === 'ten2') return { ...t, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', address: 'Malindi Oceanview Estate, Unit A2', otherInfo: 'ID No: 36789012, Lease type: Residential 1-year' };
+        if (t.id === 'ten3') return { ...t, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', address: 'Thika Greens Residential, Unit B1', otherInfo: 'ID No: 37890123, Legal Status: 2 Months Due (Advocate Dispatched)' };
+        if (t.id === 'ten4') return { ...t, avatar: 'https://images.unsplash.com/photo-1500048993953-d23a436266cf?w=150', address: 'Nakuru Valley Farms, Unit C1', otherInfo: 'ID No: 38901234, Lease type: Commercial Farm 2-year' };
+        if (t.id === 'ten5') return { ...t, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', address: 'Diani Palm Beach Plots, Unit D1', otherInfo: 'ID No: 39012345, Lease type: Holiday Villa 1-year' };
+        return t;
+      }),
+      landlords: mockLandlords.map((l) => {
+        if (l.id === 'l1') return { ...l, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', address: 'Limuru Road, Farm House 5, Kiambu', otherInfo: 'ID No: 12345678, KRA PIN: A000123456Z' };
+        if (l.id === 'l2') return { ...l, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', address: 'Section 9, Block B1, Thika', otherInfo: 'ID No: 23456789, KRA PIN: A000234567Y' };
+        if (l.id === 'l3') return { ...l, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', address: 'Nandi Hills Tea Estate, Nandi', otherInfo: 'ID No: 34567890, KRA PIN: A000345678X' };
+        return l;
+      }),
+      clients: [
+        { id: 'c1', name: 'Mary Njeri', email: 'client@vedama.co.ke', phone: '0745678901', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', address: 'Thika Greens, Villa 4B, Kiambu County', otherInfo: 'ID No: 33445566, KRA PIN: A001234567Z', createdAt: '2024-01-01' },
+        { id: 'c2', name: 'John Odhiambo', email: 'jodhiambo@email.com', phone: '0733200001', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', address: 'Milimani Estate, House 12, Kisumu', otherInfo: 'ID No: 28472947, KRA PIN: A009876543X', createdAt: '2024-01-02' },
+        { id: 'c3', name: 'Sarah Kamau', email: 'skamau@email.com', phone: '0733200002', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', address: 'Nyali Heights, Apt 3C, Mombasa', otherInfo: 'ID No: 31229384, KRA PIN: A002938472Y', createdAt: '2024-01-03' },
+        { id: 'c4', name: 'Robert Mutua', email: 'rmutua@email.com', phone: '0733200003', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', address: 'Syokimau Court, Phase 2, Machakos', otherInfo: 'ID No: 29384712, KRA PIN: A003847291P', createdAt: '2024-01-04' },
+        { id: 'c5', name: 'Angela Wangari', email: 'awangari@email.com', phone: '0733200004', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', address: 'Runda Orchards, House 89, Nairobi', otherInfo: 'ID No: 30492817, KRA PIN: A004928374M', createdAt: '2024-01-05' }
+      ],
       serviceProviders: mockServiceProviders,
       serviceRequests: mockServiceRequests,
       vouchers: mockVouchers,
@@ -714,7 +741,124 @@ export const useDataStore = create<DataState>()(
           auditLogs: newAuditLogs
         };
       }),
+
+      addLandlord: (landlord) => set((state) => ({
+        landlords: [landlord, ...state.landlords]
+      })),
+      updateLandlord: (id, updates) => set((state) => ({
+        landlords: state.landlords.map((l) => l.id === id ? { ...l, ...updates } : l)
+      })),
+      addClient: (client) => set((state) => ({
+        clients: [client, ...state.clients]
+      })),
+      updateClient: (id, updates) => set((state) => ({
+        clients: state.clients.map((c) => c.id === id ? { ...c, ...updates } : c)
+      })),
+      releaseGenericVoucherToBank: (id, releaseOfficer) => set((state) => {
+        const vIndex = state.vouchers.findIndex((v) => v.id === id);
+        if (vIndex === -1) return {};
+
+        const voucher = state.vouchers[vIndex];
+        if (voucher.status === 'paid') return {};
+
+        const hash = `TXN-EFT-${Math.random().toString(36).substring(2, 8).toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const newBalance = state.bankAccountBalance - voucher.amount;
+
+        const newVouchers = [...state.vouchers];
+        newVouchers[vIndex] = {
+          ...voucher,
+          status: 'paid',
+          releasedBy: releaseOfficer,
+          releasedAt: new Date().toISOString().split('T')[0],
+          bankReleaseHash: hash
+        };
+
+        const bankLog = {
+          id: `bl_${Math.random().toString(36).substring(2, 9)}`,
+          reference: voucher.reference || voucher.id,
+          amount: voucher.amount,
+          date: new Date().toISOString().split('T')[0],
+          status: 'cleared' as const
+        };
+
+        const ledgerEntry: LedgerEntry = {
+          id: `led_${Math.random().toString(36).substring(2, 9)}`,
+          transactionId: voucher.id,
+          type: 'commission',
+          description: `Disbursed Generic EFT Payout Voucher: ${voucher.description} to ${voucher.payee}`,
+          amount: voucher.amount,
+          landlordShare: 0,
+          companyCommission: -voucher.amount,
+          date: new Date().toISOString().split('T')[0],
+          status: 'reconciled'
+        };
+
+        const notification = {
+          id: `msg_${Math.random().toString(36).substring(2, 9)}`,
+          type: 'whatsapp' as const,
+          recipient: '+254700000000',
+          recipientName: voucher.payee,
+          subject: 'EFT Payment Released',
+          message: `Dear ${voucher.payee}, your payment of KES ${voucher.amount.toLocaleString()} has been dispatched via NCBA EFT clearance under reference hash ${hash}. Release Officer: ${releaseOfficer}.`,
+          status: 'delivered' as const,
+          category: 'receipt' as const,
+          sentAt: new Date().toISOString()
+        };
+
+        const auditLog = {
+          id: `al_${Math.random().toString(36).substring(2, 9)}`,
+          userId: 'release_officer',
+          userName: releaseOfficer,
+          action: 'RELEASED_VOUCHER_TO_BANK',
+          module: 'Finance',
+          details: `Signed and released Generic Voucher ${voucher.id} to bank. Amount KES ${voucher.amount.toLocaleString()} to ${voucher.payee}. Hash: ${hash}`,
+          timestamp: new Date().toISOString(),
+          ipAddress: '127.0.0.1'
+        };
+
+        return {
+          vouchers: newVouchers,
+          ledger: [ledgerEntry, ...state.ledger],
+          bankLogs: [bankLog, ...state.bankLogs],
+          communicationLogs: [notification, ...state.communicationLogs],
+          auditLogs: [auditLog, ...state.auditLogs],
+          bankAccountBalance: newBalance
+        };
+      }),
+      sendRentReminder: (tenantId) => set((state) => {
+        const tenant = state.tenants.find(t => t.id === tenantId);
+        if (!tenant) return {};
+
+        const notification = {
+          id: `msg_rem_${Math.random().toString(36).substring(2, 9)}`,
+          type: 'whatsapp' as const,
+          recipient: tenant.phone,
+          recipientName: tenant.name,
+          subject: 'Friendly Rent Payment Reminder',
+          message: `Dear ${tenant.name}, this is a friendly reminder that your monthly rent of KES ${tenant.rentAmount.toLocaleString()} for Unit ${tenant.unitNumber} is due on the 10th. Please secure payment before automatic late interest charges (5%) or advocate distress routing are triggered. Thank you for your continued residency!`,
+          status: 'delivered' as const,
+          category: 'payment_reminder' as const,
+          sentAt: new Date().toISOString()
+        };
+
+        const auditLog = {
+          id: `al_${Math.random().toString(36).substring(2, 9)}`,
+          userId: 'system',
+          userName: 'Rent Compliance Engine',
+          action: 'SENT_RENT_DUE_REMINDER',
+          module: 'PropertyMgmt',
+          details: `Sent rent payment reminder WhatsApp alert to ${tenant.name} (Unit ${tenant.unitNumber}) prior to evacuation/distress trigger.`,
+          timestamp: new Date().toISOString(),
+          ipAddress: '127.0.0.1'
+        };
+
+        return {
+          communicationLogs: [notification, ...state.communicationLogs],
+          auditLogs: [auditLog, ...state.auditLogs]
+        };
+      }),
     }),
     { name: 'vedama-data' }
   )
 );
+

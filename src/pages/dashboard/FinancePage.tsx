@@ -28,7 +28,7 @@ export default function FinancePage() {
   const { 
     ledger, vouchers, updateVoucher, addVoucher, addAuditLog, 
     bankSyncStatus, bankAccountBalance, bankLogs, addOperationalCost,
-    properties, transactions
+    properties, transactions, approveAndReleaseLandlordVoucher, releaseGenericVoucherToBank
   } = useDataStore();
   const { addToast } = useToastStore();
   const user = useAuthStore(s => s.user);
@@ -374,7 +374,28 @@ export default function FinancePage() {
                           <CheckCircle size={14} /> Approve Voucher
                         </button>
                       )}
-                      {v.status !== 'pending_approval' && (
+                      {v.status === 'approved' && (
+                        <button 
+                          onClick={() => {
+                            if (v.isLandlordVoucher) {
+                              approveAndReleaseLandlordVoucher(v.id, user?.name || 'Finance Officer');
+                            } else {
+                              releaseGenericVoucherToBank(v.id, user?.name || 'Finance Officer');
+                            }
+                            addToast('EFT Payment dispatched to NCBA clearing systems successfully!', 'success');
+                          }}
+                          className="text-xs font-bold text-vedama-gold hover:text-vedama-gold-dark transition-all flex items-center gap-1 justify-end w-full"
+                        >
+                          🚀 Release EFT Payout
+                        </button>
+                      )}
+                      {v.status === 'paid' && (
+                        <div className="flex flex-col items-end text-[10px]">
+                          <span className="text-status-success font-bold flex items-center gap-0.5">✓ Cleared by Bank</span>
+                          <span className="font-mono text-text-muted mt-0.5 max-w-[120px] truncate">{v.bankReleaseHash}</span>
+                        </div>
+                      )}
+                      {(!['pending_approval', 'approved', 'paid'].includes(v.status)) && (
                         <span className="text-xs text-text-muted">No pending actions</span>
                       )}
                     </td>

@@ -122,6 +122,9 @@ export interface Landlord {
   properties: string[];
   totalRevenue: number;
   pendingPayment: number;
+  avatar?: string;
+  address?: string;
+  otherInfo?: string;
 }
 
 export interface Tenant {
@@ -143,7 +146,22 @@ export interface Tenant {
   advocateName?: string;
   distressDate?: string;
   leaseAgreementUrl?: string;
+  avatar?: string;
+  address?: string;
+  otherInfo?: string;
 }
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  address?: string;
+  otherInfo?: string;
+  createdAt: string;
+}
+
 
 export interface ServiceRequest {
   id: string;

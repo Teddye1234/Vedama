@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 import PropertyCard from '../components/PropertyCard';
-import { mockProperties } from '../lib/mockData';
+import { useDataStore } from '../stores/dataStore';
 import { Search, Filter } from 'lucide-react';
 
 export default function PropertiesPage() {
+  const properties = useDataStore(s => s.properties);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const filteredProperties = mockProperties.filter(p => {
+  const filteredProperties = properties.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           p.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;

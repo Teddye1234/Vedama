@@ -4,16 +4,18 @@ import { ArrowRight, ShieldCheck, Map, TrendingUp, HandCoins, Sparkles, Copy, Me
 import PublicNavbar from '../components/PublicNavbar';
 import PublicFooter from '../components/PublicFooter';
 import PropertyCard from '../components/PropertyCard';
-import { mockProperties, mockDirectors } from '../lib/mockData';
+import { useDataStore } from '../stores/dataStore';
+import { mockDirectors } from '../lib/mockData';
 import { formatCurrency } from '../lib/utils';
 import { useToastStore } from '../components/ui/Toast';
 
 export default function LandingPage() {
   const { addToast } = useToastStore();
-  const featuredProperties = mockProperties.filter(p => p.featured).slice(0, 3);
+  const properties = useDataStore(s => s.properties);
+  const featuredProperties = properties.filter(p => p.featured).slice(0, 3);
 
   // AI Marketing Copilot States
-  const [selectedPropertyId, setSelectedPropertyId] = useState(mockProperties[0].id);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
   const [platform, setPlatform] = useState<'facebook' | 'instagram' | 'sms' | 'whatsapp'>('facebook');
   const [generatedAd, setGeneratedAd] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -27,7 +29,7 @@ export default function LandingPage() {
 
   const handleGenerateAd = () => {
     setIsGenerating(true);
-    const prop = mockProperties.find(p => p.id === selectedPropertyId) || mockProperties[0];
+    const prop = properties.find(p => p.id === selectedPropertyId) || properties[0];
     
     setTimeout(() => {
       let copy = '';
@@ -234,7 +236,7 @@ export default function LandingPage() {
                     onChange={(e) => setSelectedPropertyId(e.target.value)}
                     className="input-field mt-1"
                   >
-                    {mockProperties.map(p => (
+                    {properties.map(p => (
                       <option key={p.id} value={p.id}>{p.title} ({formatCurrency(p.pricePerPlot)})</option>
                     ))}
                   </select>

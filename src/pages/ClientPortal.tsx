@@ -16,6 +16,7 @@ export default function ClientPortal() {
   const { addToast } = useToastStore();
 
   const [activeReceiptTx, setActiveReceiptTx] = useState<any>(null);
+  const [activeRentReceipt, setActiveRentReceipt] = useState<any>(null);
   const [quickPayAmount, setQuickPayAmount] = useState<number>(0);
   const [selectedTxId, setSelectedTxId] = useState('');
 
@@ -211,6 +212,82 @@ export default function ClientPortal() {
                   </div>
                 </div>
 
+                {/* 📋 Rental Invoice & Interest Penalties Ledger Statement */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-primary mb-3 flex items-center gap-1.5">
+                    <FileText size={14} className="text-vedama-gold" /> Rent Invoices & Penalty Ledger Statement
+                  </h4>
+                  <div className="overflow-x-auto border border-surface-border rounded-2xl overflow-hidden text-xs">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-surface-bg border-b border-surface-border text-text-secondary font-bold">
+                          <th className="py-3 px-4">Invoice / Item</th>
+                          <th className="py-3 px-4">Due Date</th>
+                          <th className="py-3 px-4 text-right">Invoice Sum</th>
+                          <th className="py-3 px-4 text-right">Interest Charged</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right">Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-surface-border">
+                        {/* Rent Invoice row */}
+                        <tr className="hover:bg-surface-hover/30">
+                          <td className="py-3 px-4 font-semibold text-text-primary">
+                            <div>Rent Billing - Cycle May 2026</div>
+                            <span className="text-[10px] text-text-muted font-mono">INV-RENT-M26</span>
+                          </td>
+                          <td className="py-3 px-4 text-text-secondary">2026-05-05</td>
+                          <td className="py-3 px-4 text-right font-bold">{formatCurrency(myTenantRecord.rentAmount)}</td>
+                          <td className="py-3 px-4 text-right text-text-muted">KES 0 (Base Rent)</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${myTenantRecord.balance === 0 ? 'bg-green-100 text-status-success' : 'bg-amber-100 text-status-warning'}`}>
+                              {myTenantRecord.balance === 0 ? 'PAID' : 'PENDING INSTALLMENT'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {myTenantRecord.balance === 0 ? (
+                              <button 
+                                onClick={() => setActiveRentReceipt({
+                                  reference: 'REC-RENT-M26',
+                                  date: '2026-05-04',
+                                  amount: myTenantRecord.rentAmount,
+                                  method: 'NCBA Bank Wire'
+                                })}
+                                className="px-2.5 py-1 bg-vedama-emerald/10 text-vedama-emerald hover:bg-vedama-emerald hover:text-white rounded-full font-bold text-[10px] transition-all flex items-center gap-1 ml-auto"
+                              >
+                                <Printer size={10} /> View Receipt
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-text-muted italic">Payment outstanding</span>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Penalty Interest Invoice row (if applicable) */}
+                        {myTenantRecord.interestCharged && myTenantRecord.interestCharged > 0 ? (
+                          <tr className="hover:bg-surface-hover/30 bg-red-50/5">
+                            <td className="py-3 px-4 font-semibold text-status-danger">
+                              <div>Late Payment Interest Fee (5%)</div>
+                              <span className="text-[10px] text-text-muted font-mono">INV-INT-M26</span>
+                            </td>
+                            <td className="py-3 px-4 text-text-secondary">2026-05-10</td>
+                            <td className="py-3 px-4 text-right font-bold text-status-danger">{formatCurrency(myTenantRecord.interestCharged)}</td>
+                            <td className="py-3 px-4 text-right font-bold text-status-danger">5% Accrued Rate</td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 bg-red-100 text-status-danger rounded-full font-bold text-[9px]">
+                                INTEREST CHARGED
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className="text-[10px] text-text-muted italic">Awaiting clearance</span>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
                 {/* Tenant Maintenance Work Confirmation */}
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-text-primary mb-3 flex items-center gap-2">
@@ -400,6 +477,77 @@ export default function ClientPortal() {
               <div>
                 <div>Date Cleared: {formatDate(activeReceiptTx.updatedAt)}</div>
                 <div>Hash Code: VDM-TX-{activeReceiptTx.id.toUpperCase()}</div>
+              </div>
+              <button 
+                onClick={() => window.print()}
+                className="btn-emerald py-1 px-3 !rounded-full text-[10px] font-bold flex items-center gap-1 shadow"
+              >
+                <Printer size={10} /> Print Receipt
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* RENT Certified Receipt Modal */}
+      {activeRentReceipt && (
+        <Modal 
+          isOpen={!!activeRentReceipt} 
+          onClose={() => setActiveRentReceipt(null)} 
+          title="Official Certified Rent Payment Receipt" 
+          size="md"
+        >
+          <div className="bg-white p-6 rounded-2xl border border-surface-border relative overflow-hidden" id="printable-rent-receipt">
+            <div className="absolute top-4 right-4 text-status-success border-4 border-dashed border-status-success/20 rounded-full w-20 h-20 flex flex-col items-center justify-center rotate-12 select-none">
+              <CheckCircle size={24} />
+              <span className="text-[8px] font-bold mt-0.5">PAID</span>
+            </div>
+
+            {/* Logo Letterhead */}
+            <div className="border-b border-surface-border pb-4 mb-6">
+              <div className="text-lg font-heading font-black text-vedama-emerald tracking-wide">VEDAMA COMPANY LIMITED</div>
+              <div className="text-[10px] text-text-secondary">Rental Management and Real Estate Leasing Systems</div>
+              <div className="text-[10px] text-text-muted">Certified under Francis Mathea (Founder & CEO)</div>
+            </div>
+
+            {/* Receipt Specifications */}
+            <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-4 text-center bg-surface-bg py-1.5 border border-surface-border rounded-lg">OFFICIAL CERTIFIED RENT RECEIPT</h4>
+
+            <div className="space-y-2 text-xs mb-6">
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Tenant Name:</span>
+                <span className="font-bold text-text-primary">{myTenantRecord?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Allocated Asset:</span>
+                <span className="font-semibold text-text-primary">Unit {myTenantRecord?.unitNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Clearance Date:</span>
+                <span className="font-semibold text-text-primary">{formatDate(activeRentReceipt.date)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Clearing Method:</span>
+                <span className="font-mono font-bold text-vedama-emerald">{activeRentReceipt.method}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-surface-border font-bold text-sm">
+                <span className="text-text-secondary">Cleared Rent Paid:</span>
+                <span className="text-status-success">{formatCurrency(activeRentReceipt.amount)}</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-[10px] text-green-800 leading-normal flex items-start gap-2">
+              <CheckCircle className="shrink-0 mt-0.5" size={14} />
+              <div>
+                <strong>Lienholder Escrow Trustee Clearance:</strong> Bank wire verified and ledger splits updated. Receipt issued in active standing.
+              </div>
+            </div>
+
+            {/* Signature footer */}
+            <div className="mt-8 pt-6 border-t border-surface-border flex justify-between items-end text-[10px] text-text-secondary">
+              <div>
+                <div>Reference Code: {activeRentReceipt.reference}</div>
+                <div>Hash Code: VDM-RENT-{activeRentReceipt.reference}</div>
               </div>
               <button 
                 onClick={() => window.print()}
