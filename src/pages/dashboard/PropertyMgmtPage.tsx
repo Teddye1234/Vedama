@@ -835,22 +835,29 @@ export default function PropertyMgmtPage() {
                 onChange={(e) => setAddAvatar(e.target.value)}
                 className="input-field !py-1 text-[10px] flex-grow"
               />
-              <button 
-                type="button"
-                onClick={() => {
-                  const mockUrls = [
-                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
-                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
-                  ];
-                  const randomUrl = mockUrls[Math.floor(Math.random() * mockUrls.length)];
-                  setAddAvatar(randomUrl);
-                  addToast('Mock local photo uploaded successfully!', 'success');
-                }}
-                className="px-3 bg-vedama-emerald hover:bg-vedama-emerald-dark text-white text-[8px] font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all"
+              <label 
+                className="px-3 py-2 bg-vedama-emerald hover:bg-vedama-emerald-dark text-white text-[8px] font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center shrink-0"
               >
                 Upload File
-              </button>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        if (typeof reader.result === 'string') {
+                          setAddAvatar(reader.result);
+                          addToast('Local profile image uploaded successfully!', 'success');
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
             </div>
           </div>
 
@@ -1072,22 +1079,29 @@ export default function PropertyMgmtPage() {
                 onChange={(e) => setEditAvatar(e.target.value)}
                 className="input-field !py-1 text-[10px] flex-grow"
               />
-              <button 
-                type="button"
-                onClick={() => {
-                  const mockUrls = [
-                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
-                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
-                  ];
-                  const randomUrl = mockUrls[Math.floor(Math.random() * mockUrls.length)];
-                  setEditAvatar(randomUrl);
-                  addToast('Mock local photo uploaded successfully!', 'success');
-                }}
-                className="px-3 bg-vedama-emerald hover:bg-vedama-emerald-dark text-white text-[8px] font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all"
+              <label 
+                className="px-3 py-2 bg-vedama-emerald hover:bg-vedama-emerald-dark text-white text-[8px] font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center shrink-0"
               >
                 Upload File
-              </button>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        if (typeof reader.result === 'string') {
+                          setEditAvatar(reader.result);
+                          addToast('Local profile image uploaded successfully!', 'success');
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
             </div>
           </div>
 
