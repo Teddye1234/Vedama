@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Plus, Search, AlertTriangle, UserPlus, ShieldAlert, CreditCard, 
-  Edit2, Calendar, FileText, CheckCircle, Users, Briefcase, MapPin, Mail, Phone, Sparkles 
+  Edit2, Calendar, FileText, CheckCircle, Users, Briefcase, MapPin, Mail, Phone, Sparkles,
+  Camera, Landmark, User 
 } from 'lucide-react';
 import { useDataStore } from '../../stores/dataStore';
 import { useToastStore } from '../../components/ui/Toast';
@@ -51,6 +52,9 @@ export default function PropertyMgmtPage() {
   // Form states for Add Tenant
   const [addLeaseUrl, setAddLeaseUrl] = useState('');
   const [addLeaseName, setAddLeaseName] = useState('');
+  const [addAvatar, setAddAvatar] = useState('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150');
+  const [addLandlordId, setAddLandlordId] = useState('');
+  const [addClientId, setAddClientId] = useState('');
 
   // Form states for Edit Tenant
   const [editName, setEditName] = useState('');
@@ -65,6 +69,9 @@ export default function PropertyMgmtPage() {
   const [editStatus, setEditStatus] = useState<'active' | 'arrears' | 'distress' | 'vacated'>('active');
   const [editLeaseUrl, setEditLeaseUrl] = useState('');
   const [editLeaseName, setEditLeaseName] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [editLandlordId, setEditLandlordId] = useState('');
+  const [editClientId, setEditClientId] = useState('');
   
   // Form states for Record Payment
   const [payAmount, setPayAmount] = useState(0);
@@ -162,6 +169,9 @@ export default function PropertyMgmtPage() {
     setEditStatus(tenant.status);
     setEditLeaseUrl(tenant.leaseAgreementUrl || '');
     setEditLeaseName(tenant.leaseAgreementUrl ? tenant.leaseAgreementUrl.split('/').pop() || 'lease_document.pdf' : '');
+    setEditAvatar(tenant.avatar || '');
+    setEditLandlordId(tenant.landlordId || '');
+    setEditClientId(tenant.clientId || '');
     setIsEditModalOpen(true);
   };
 
@@ -181,7 +191,10 @@ export default function PropertyMgmtPage() {
       leaseStart: editLeaseStart,
       leaseEnd: editLeaseEnd,
       status: editStatus,
-      leaseAgreementUrl: editLeaseUrl
+      leaseAgreementUrl: editLeaseUrl,
+      avatar: editAvatar,
+      landlordId: editLandlordId,
+      clientId: editClientId
     });
 
     addAuditLog({
@@ -225,7 +238,10 @@ export default function PropertyMgmtPage() {
       leaseEnd: new Date(new Date(formData.get('leaseStart') as string).setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
       balance: 0,
       status: 'active',
-      leaseAgreementUrl: addLeaseUrl
+      leaseAgreementUrl: addLeaseUrl,
+      avatar: addAvatar,
+      landlordId: addLandlordId,
+      clientId: addClientId
     };
 
     addTenant(newTenant);
@@ -245,6 +261,9 @@ export default function PropertyMgmtPage() {
     setIsAddModalOpen(false);
     setAddLeaseUrl('');
     setAddLeaseName('');
+    setAddAvatar('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150');
+    setAddLandlordId('');
+    setAddClientId('');
   };
 
   const handleAddLandlord = (e: React.FormEvent<HTMLFormElement>) => {
@@ -491,6 +510,20 @@ export default function PropertyMgmtPage() {
                           <div>
                             <div className="font-semibold text-text-primary text-sm">{tenant.name}</div>
                             <div className="text-[10px] text-text-muted mt-0.5">{tenant.phone} · {tenant.email || 'No Email'}</div>
+                            {(tenant.landlordId || tenant.clientId) && (
+                              <div className="flex flex-wrap gap-1 mt-1 text-[8px]">
+                                {tenant.landlordId && (
+                                  <span className="px-1.5 py-0.5 bg-vedama-emerald/10 text-vedama-emerald rounded-full font-bold uppercase tracking-wider flex items-center gap-0.5">
+                                    <Landmark size={8} /> Landlord: {landlords.find(l => l.id === tenant.landlordId)?.name || tenant.landlordId}
+                                  </span>
+                                )}
+                                {tenant.clientId && (
+                                  <span className="px-1.5 py-0.5 bg-vedama-gold/15 text-vedama-gold-dark rounded-full font-bold uppercase tracking-wider flex items-center gap-0.5">
+                                    <User size={8} /> Buyer Client: {clients.find(c => c.id === tenant.clientId)?.name || tenant.clientId}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -752,8 +785,75 @@ export default function PropertyMgmtPage() {
       )}
 
       {/* 1. ADD NEW TENANT MODAL */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New tenant Profile" size="md">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Tenant Profile" size="md">
         <form className="space-y-5" onSubmit={handleAddTenant}>
+          
+          {/* Avatar Upload Preview & Selection */}
+          <div className="flex flex-col items-center justify-center space-y-3 bg-surface-bg p-4 rounded-3xl border border-surface-border">
+            <div className="relative group cursor-pointer">
+              <img 
+                src={addAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
+                alt="Tenant Avatar" 
+                className="w-20 h-20 rounded-full object-cover border-4 border-vedama-gold shadow-md group-hover:opacity-85 transition-opacity"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/45 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="text-white w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-center">
+              <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">Profile Image Selection</span>
+              <p className="text-[9px] text-text-secondary mt-0.5">Click any professional preset below or enter/upload custom photo</p>
+            </div>
+            
+            {/* Presets Grid */}
+            <div className="grid grid-cols-6 gap-2 w-full pt-1.5 border-t border-dashed">
+              {[
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+                'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
+              ].map((imgUrl, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setAddAvatar(imgUrl)}
+                  className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${addAvatar === imgUrl ? 'border-vedama-emerald ring-2 ring-vedama-gold' : 'border-surface-border'}`}
+                >
+                  <img src={imgUrl} className="w-full h-full object-cover" alt="" />
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Input / Local Uploader */}
+            <div className="w-full flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Paste custom photo URL..."
+                value={addAvatar}
+                onChange={(e) => setAddAvatar(e.target.value)}
+                className="input-field !py-1 text-[10px] flex-grow"
+              />
+              <button 
+                type="button"
+                onClick={() => {
+                  const mockUrls = [
+                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
+                  ];
+                  const randomUrl = mockUrls[Math.floor(Math.random() * mockUrls.length)];
+                  setAddAvatar(randomUrl);
+                  addToast('Mock local photo uploaded successfully!', 'success');
+                }}
+                className="px-3 bg-vedama-emerald hover:bg-vedama-emerald-dark text-white text-[8px] font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all"
+              >
+                Upload File
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="col-span-2">
               <label className="label">Full Name</label>
@@ -767,6 +867,7 @@ export default function PropertyMgmtPage() {
               <label className="label">Email Address</label>
               <input name="email" type="email" className="input-field" placeholder="e.g. fnjuguna@gmail.com" />
             </div>
+            
             <div className="col-span-2 bg-surface-bg p-3.5 rounded-xl border border-surface-border space-y-3">
               <label className="label font-bold text-text-primary uppercase tracking-wider text-[9px]">🏢 Asset Allocations</label>
               <div className="flex gap-2">
@@ -779,6 +880,41 @@ export default function PropertyMgmtPage() {
                 <input name="unitNumber" type="text" className="input-field w-24 text-center" placeholder="Unit #" required />
               </div>
             </div>
+
+            {/* Landlord and Client Linkages */}
+            <div className="col-span-2 grid grid-cols-2 gap-4 bg-surface-bg p-3.5 rounded-xl border border-surface-border">
+              <div>
+                <label className="label font-bold text-text-primary uppercase tracking-wider text-[9px] mb-1.5 flex items-center gap-1">
+                  <Landmark size={12} className="text-vedama-gold" /> Link Landlord Partner
+                </label>
+                <select 
+                  value={addLandlordId} 
+                  onChange={(e) => setAddLandlordId(e.target.value)} 
+                  className="input-field"
+                >
+                  <option value="">-- None (No Link) --</option>
+                  {landlords.map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label font-bold text-text-primary uppercase tracking-wider text-[9px] mb-1.5 flex items-center gap-1">
+                  <User size={12} className="text-vedama-gold" /> Link Buyer Client
+                </label>
+                <select 
+                  value={addClientId} 
+                  onChange={(e) => setAddClientId(e.target.value)} 
+                  className="input-field"
+                >
+                  <option value="">-- None (No Link) --</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div className="col-span-1">
               <label className="label">Monthly Rent Amount (KES)</label>
               <input name="rentAmount" type="number" className="input-field" placeholder="e.g. 45000" required />
@@ -888,6 +1024,73 @@ export default function PropertyMgmtPage() {
       {/* 3. EDIT TENANCY DETAILS MODAL */}
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Tenancy Files & Arrears" size="md">
         <form className="space-y-5" onSubmit={handleEditTenantSubmit}>
+          
+          {/* Avatar Upload Preview & Selection */}
+          <div className="flex flex-col items-center justify-center space-y-3 bg-surface-bg p-4 rounded-3xl border border-surface-border">
+            <div className="relative group cursor-pointer">
+              <img 
+                src={editAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
+                alt="Tenant Avatar" 
+                className="w-20 h-20 rounded-full object-cover border-4 border-vedama-gold shadow-md group-hover:opacity-85 transition-opacity"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/45 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="text-white w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-center">
+              <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">Profile Image Selection</span>
+              <p className="text-[9px] text-text-secondary mt-0.5">Click any professional preset below or enter/upload custom photo</p>
+            </div>
+            
+            {/* Presets Grid */}
+            <div className="grid grid-cols-6 gap-2 w-full pt-1.5 border-t border-dashed">
+              {[
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+                'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
+              ].map((imgUrl, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setEditAvatar(imgUrl)}
+                  className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${editAvatar === imgUrl ? 'border-vedama-emerald ring-2 ring-vedama-gold' : 'border-surface-border'}`}
+                >
+                  <img src={imgUrl} className="w-full h-full object-cover" alt="" />
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Input / Local Uploader */}
+            <div className="w-full flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Paste custom photo URL..."
+                value={editAvatar}
+                onChange={(e) => setEditAvatar(e.target.value)}
+                className="input-field !py-1 text-[10px] flex-grow"
+              />
+              <button 
+                type="button"
+                onClick={() => {
+                  const mockUrls = [
+                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
+                  ];
+                  const randomUrl = mockUrls[Math.floor(Math.random() * mockUrls.length)];
+                  setEditAvatar(randomUrl);
+                  addToast('Mock local photo uploaded successfully!', 'success');
+                }}
+                className="px-3 bg-vedama-emerald hover:bg-vedama-emerald-dark text-white text-[8px] font-bold uppercase tracking-wider rounded-xl shadow-sm transition-all"
+              >
+                Upload File
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="col-span-2">
               <label className="label">Full Name</label>
@@ -918,6 +1121,7 @@ export default function PropertyMgmtPage() {
                 onChange={(e) => setEditEmail(e.target.value)}
               />
             </div>
+            
             <div className="col-span-2 bg-surface-bg p-3.5 rounded-xl border border-surface-border space-y-3">
               <label className="label font-bold text-text-primary uppercase tracking-wider text-[9px]">🏢 Asset Allocations</label>
               <div className="flex gap-2">
@@ -940,7 +1144,41 @@ export default function PropertyMgmtPage() {
                 />
               </div>
             </div>
-            
+
+            {/* Landlord and Client Linkages */}
+            <div className="col-span-2 grid grid-cols-2 gap-4 bg-surface-bg p-3.5 rounded-xl border border-surface-border">
+              <div>
+                <label className="label font-bold text-text-primary uppercase tracking-wider text-[9px] mb-1.5 flex items-center gap-1">
+                  <Landmark size={12} className="text-vedama-gold" /> Link Landlord Partner
+                </label>
+                <select 
+                  value={editLandlordId} 
+                  onChange={(e) => setEditLandlordId(e.target.value)} 
+                  className="input-field"
+                >
+                  <option value="">-- None (No Link) --</option>
+                  {landlords.map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label font-bold text-text-primary uppercase tracking-wider text-[9px] mb-1.5 flex items-center gap-1">
+                  <User size={12} className="text-vedama-gold" /> Link Buyer Client
+                </label>
+                <select 
+                  value={editClientId} 
+                  onChange={(e) => setEditClientId(e.target.value)} 
+                  className="input-field"
+                >
+                  <option value="">-- None (No Link) --</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div className="col-span-1">
               <label className="label">Monthly Rent Obligation (KES)</label>
               <input 

@@ -149,6 +149,8 @@ export interface Tenant {
   avatar?: string;
   address?: string;
   otherInfo?: string;
+  landlordId?: string;
+  clientId?: string;
 }
 
 export interface Client {
