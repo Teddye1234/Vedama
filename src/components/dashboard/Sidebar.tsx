@@ -10,7 +10,8 @@ import {
   MessageSquare, 
   BarChart3, 
   ShieldAlert,
-  X
+  X,
+  Users
 } from 'lucide-react';
 import Logo from '../ui/Logo';
 import { useAuthStore } from '../../stores/authStore';
@@ -26,6 +27,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'finance'] },
     { name: 'Properties', path: '/dashboard/properties', icon: MapIcon, roles: ['admin'] },
+    { name: 'User Management', path: '/dashboard/users', icon: Users, roles: ['admin'] },
     { name: 'Land Sales POS', path: '/dashboard/sales', icon: CircleDollarSign, roles: ['admin', 'finance'] },
     { name: 'Finance Ledger', path: '/dashboard/finance', icon: Wallet, roles: ['admin', 'finance'] },
     { name: 'Property Mgmt', path: '/dashboard/property-mgmt', icon: Building, roles: ['admin'] },

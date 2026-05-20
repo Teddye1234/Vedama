@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, MapPin, Landmark, FileText, CheckCircle, Shield, Edit2, Info } from 'lucide-react';
+import { Plus, Search, MapPin, Landmark, FileText, CheckCircle, Shield, Edit2, Info, X } from 'lucide-react';
 import { useDataStore } from '../../stores/dataStore';
 import { useToastStore } from '../../components/ui/Toast';
 import { useAuthStore } from '../../stores/authStore';
@@ -38,6 +38,7 @@ export default function PropertiesAdminPage() {
   const [formLienBank, setFormLienBank] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formStatus, setFormStatus] = useState<'available' | 'selling' | 'sold_out'>('available');
+  const [formImages, setFormImages] = useState<string[]>([]);
 
   // Legal document states
   const [formTitleDeed, setFormTitleDeed] = useState('');
@@ -73,6 +74,7 @@ export default function PropertiesAdminPage() {
     setFormLienBank('NCBA Bank Ltd');
     setFormDescription('');
     setFormStatus('available');
+    setFormImages(['https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80']);
     
     // Set realistic legal defaults for demo
     setFormTitleDeed('https://registry.lands.go.ke/deeds/title-deed-vdm.pdf');
@@ -98,6 +100,7 @@ export default function PropertiesAdminPage() {
     setFormLienBank(property.lienholderBank || 'NCBA Bank Ltd');
     setFormDescription(property.description);
     setFormStatus(property.status);
+    setFormImages(property.images || []);
 
     // Document links
     setFormTitleDeed(property.titleDeedUrl || 'https://registry.lands.go.ke/deeds/title-deed-vdm.pdf');
@@ -130,6 +133,7 @@ export default function PropertiesAdminPage() {
       lienholderBank: formLienBank,
       description: formDescription,
       status: formStatus,
+      images: formImages,
       // Document URLs
       titleDeedUrl: formTitleDeed,
       surveyMapUrl: formSurveyMap,
@@ -169,7 +173,7 @@ export default function PropertiesAdminPage() {
         pricePerAcre: Number(formPricePerAcre),
         lat: -1.286389,
         lng: 36.817223,
-        images: ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80'],
+        images: formImages.length > 0 ? formImages : ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80'],
         amenities: ['Water Connection', 'Electricity Grids', 'Access Road', 'Lien Protection'],
         status: formStatus,
         featured: false,
@@ -619,6 +623,45 @@ export default function PropertiesAdminPage() {
                     />
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Property Image Gallery Showcase */}
+            <div className="col-span-2 bg-surface-bg p-4 rounded-2xl border border-surface-border space-y-4 text-xs">
+              <h4 className="font-bold uppercase tracking-wider text-text-primary text-[10px] flex items-center gap-1.5 font-bold">
+                🖼️ Property Asset Showcase Gallery
+              </h4>
+              
+              {/* Image Grid */}
+              {formImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {formImages.map((imgUrl: string, i: number) => (
+                    <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] border border-surface-border shadow-sm">
+                      <img src={imgUrl} alt={`Showcase ${i+1}`} className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setFormImages(formImages.filter((_: string, idx: number) => idx !== i))}
+                        className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm cursor-pointer"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload Dropzone */}
+              <div>
+                <FileUpload 
+                  label="Upload New Property Photo" 
+                  accept="image/*"
+                  onUploadComplete={(url) => {
+                    if (url) {
+                      setFormImages((prev: string[]) => [...prev, url]);
+                      addToast("Photo uploaded and added to showcase gallery!", "success");
+                    }
+                  }} 
+                />
               </div>
             </div>
 

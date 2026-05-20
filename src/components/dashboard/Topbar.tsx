@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Bell, Search, LogOut, CheckCircle2, Info, AlertCircle } from 'lucide-react';
+import { Menu, Bell, Search, LogOut, CheckCircle2, Info, AlertCircle, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useDataStore } from '../../stores/dataStore';
 import { formatDate } from '../../lib/utils';
+import ChangePasswordModal from '../auth/ChangePasswordModal';
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -16,6 +17,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
@@ -121,7 +123,16 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           </div>
         )}
         
-        <div className="h-8 w-px bg-surface-border mx-1"></div>
+        <button 
+          onClick={() => setIsChangePasswordOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-text-secondary hover:text-vedama-emerald hover:bg-vedama-emerald/10 rounded-xl transition-all active:scale-95 cursor-pointer"
+          title="Change Password"
+        >
+          <Key size={18} />
+          <span className="hidden lg:inline">Change Password</span>
+        </button>
+
+        <div className="h-8 w-px bg-surface-border"></div>
         
         <button 
           onClick={handleLogout}
@@ -131,6 +142,11 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           <span className="hidden sm:inline">Logout</span>
         </button>
       </div>
+
+      <ChangePasswordModal 
+        isOpen={isChangePasswordOpen} 
+        onClose={() => setIsChangePasswordOpen(false)} 
+      />
     </header>
   );
 }

@@ -2,12 +2,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   Property, Transaction, Tenant, Landlord, ServiceProvider, 
-  ServiceRequest, CommunicationLog, AuditLog, Voucher, LedgerEntry, Client 
+  ServiceRequest, CommunicationLog, AuditLog, Voucher, LedgerEntry, Client, User 
 } from '../types';
 import { 
   mockProperties, mockTransactions, mockTenants, mockLandlords, 
   mockServiceProviders, mockServiceRequests, mockVouchers, 
-  mockLedger, mockCommunicationLogs, mockAuditLogs 
+  mockLedger, mockCommunicationLogs, mockAuditLogs, mockUsers 
 } from '../lib/mockData';
 import api from '../lib/api';
 
@@ -24,6 +24,7 @@ interface DataState {
   communicationLogs: CommunicationLog[];
   auditLogs: AuditLog[];
   clients: Client[];
+  users: User[];
   
   // Bank Link states
   bankSyncStatus: 'connected' | 'disconnected';
@@ -53,6 +54,10 @@ interface DataState {
   addProperty: (property: Property) => void;
   updateProperty: (id: string, updates: Partial<Property>) => void;
   
+  addUser: (user: User) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+  
   addCommunicationLog: (log: CommunicationLog) => void;
   addAuditLog: (log: AuditLog) => void;
   
@@ -77,14 +82,14 @@ export const useDataStore = create<DataState>()(
       const syncWithServer = async (state: any) => {
         try {
           const { 
-            properties, transactions, tenants, landlords, serviceProviders, 
+            users, properties, transactions, tenants, landlords, serviceProviders, 
             serviceRequests, vouchers, ledger, communicationLogs, auditLogs, 
             clients, bankSyncStatus, bankAccountBalance, bankLogs 
           } = state;
           
           await api.post('/data', {
             state: {
-              properties, transactions, tenants, landlords, serviceProviders, 
+              users, properties, transactions, tenants, landlords, serviceProviders, 
               serviceRequests, vouchers, ledger, communicationLogs, auditLogs, 
               clients, bankSyncStatus, bankAccountBalance, bankLogs 
             }
@@ -165,6 +170,7 @@ export const useDataStore = create<DataState>()(
         { id: 'c4', name: 'Robert Mutua', email: 'rmutua@email.com', phone: '0733200003', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', address: 'Syokimau Court, Phase 2, Machakos', otherInfo: 'ID No: 29384712, KRA PIN: A003847291P', createdAt: '2024-01-04' },
         { id: 'c5', name: 'Angela Wangari', email: 'awangari@email.com', phone: '0733200004', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', address: 'Runda Orchards, House 89, Nairobi', otherInfo: 'ID No: 30492817, KRA PIN: A004928374M', createdAt: '2024-01-05' }
       ],
+      users: mockUsers,
       serviceProviders: mockServiceProviders,
       serviceRequests: mockServiceRequests,
       vouchers: mockVouchers,
@@ -219,9 +225,17 @@ export const useDataStore = create<DataState>()(
       addProperty: (property) => set((state) => ({
         properties: [property, ...state.properties]
       })),
-
       updateProperty: (id, updates) => set((state) => ({
         properties: state.properties.map((p) => p.id === id ? { ...p, ...updates } : p)
+      })),
+      addUser: (user) => set((state) => ({
+        users: [user, ...state.users]
+      })),
+      updateUser: (id, updates) => set((state) => ({
+        users: state.users.map((u) => u.id === id ? { ...u, ...updates } : u)
+      })),
+      deleteUser: (id) => set((state) => ({
+        users: state.users.filter((u) => u.id !== id)
       })),
 
       addCommunicationLog: (log) => set((state) => ({

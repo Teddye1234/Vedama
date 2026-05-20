@@ -7,13 +7,15 @@ interface FileUploadProps {
   onUploadComplete: (url: string, fileName: string) => void;
   defaultUrl?: string;
   defaultName?: string;
+  accept?: string;
 }
 
 export default function FileUpload({ 
   label = "Attach Document", 
   onUploadComplete, 
   defaultUrl = "", 
-  defaultName = "" 
+  defaultName = "",
+  accept = ".pdf,.png,.jpg,.jpeg,.doc,.docx"
 }: FileUploadProps) {
   const [fileName, setFileName] = useState(defaultName);
   const [fileSize, setFileSize] = useState("");
@@ -49,19 +51,37 @@ export default function FileUpload({
     } catch (error) {
       console.warn("Vercel Blob upload failed (could be offline or missing token). Falling back to simulation...", error);
       
+      const simulatedUrl = `file:///C:/Users/USER/.gemini/antigravity/scratch/vedama-platform/src/assets/uploads/${file.name.replace(/\s+/g, '_')}`;
+      
+      const readAsDataURL = () => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.onerror = () => {
+            resolve(simulatedUrl);
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+      
       // Graceful local development simulation fallback
       let currentProgress = 0;
-      const interval = setInterval(() => {
+      const interval = setInterval(async () => {
         currentProgress += 10;
         setProgress(currentProgress);
         
         if (currentProgress >= 100) {
           clearInterval(interval);
+          let finalUrl = simulatedUrl;
+          if (file.type.startsWith('image/')) {
+            finalUrl = await readAsDataURL();
+          }
           setTimeout(() => {
             setIsUploading(false);
-            const simulatedUrl = `file:///C:/Users/USER/.gemini/antigravity/scratch/vedama-platform/src/assets/uploads/${file.name.replace(/\s+/g, '_')}`;
-            setUploadedUrl(simulatedUrl);
-            onUploadComplete(simulatedUrl, file.name);
+            setUploadedUrl(finalUrl);
+            onUploadComplete(finalUrl, file.name);
           }, 200);
         }
       }, 80);
@@ -129,7 +149,7 @@ export default function FileUpload({
           type="file" 
           onChange={handleFileChange}
           className="hidden" 
-          accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+          accept={accept}
         />
 
         {/* Uploading State */}

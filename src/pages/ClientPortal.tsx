@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Home, FileText, CreditCard, Bell, Printer, CheckCircle, ArrowRight, X, Wrench } from 'lucide-react';
+import { LogOut, Home, FileText, CreditCard, Bell, Printer, CheckCircle, ArrowRight, X, Wrench, Key } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import Badge, { statusToBadge } from '../components/ui/Badge';
 import { useAuthStore } from '../stores/authStore';
+import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 import { useDataStore } from '../stores/dataStore';
 import { useToastStore } from '../components/ui/Toast';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -19,6 +20,7 @@ export default function ClientPortal() {
   const [activeRentReceipt, setActiveRentReceipt] = useState<any>(null);
   const [quickPayAmount, setQuickPayAmount] = useState<number>(0);
   const [selectedTxId, setSelectedTxId] = useState('');
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -85,6 +87,17 @@ export default function ClientPortal() {
             <span className="text-sm font-bold text-text-primary">{user?.name || 'Mary Njeri'}</span>
             <span className="text-xs text-text-muted">Client Account</span>
           </div>
+
+          <button 
+            onClick={() => setIsChangePasswordOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-text-secondary hover:text-vedama-emerald hover:bg-surface-hover rounded-lg transition-colors text-sm font-semibold cursor-pointer animate-scale-in"
+            title="Change Password"
+          >
+            <Key size={18} /> <span className="hidden sm:inline">Change Password</span>
+          </button>
+          
+          <div className="h-8 w-px bg-surface-border mx-1"></div>
+
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2 bg-status-danger-bg text-status-danger text-sm font-semibold rounded-lg hover:bg-red-100 transition-colors"
@@ -93,6 +106,11 @@ export default function ClientPortal() {
           </button>
         </div>
       </nav>
+
+      <ChangePasswordModal 
+        isOpen={isChangePasswordOpen} 
+        onClose={() => setIsChangePasswordOpen(false)} 
+      />
 
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <div className="mb-8">

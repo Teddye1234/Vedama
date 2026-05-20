@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Bell, DollarSign, Wrench, CheckCircle, Landmark, ShieldAlert, Award, FileText, AlertTriangle } from 'lucide-react';
+import { LogOut, Bell, DollarSign, Wrench, CheckCircle, Landmark, ShieldAlert, Award, FileText, AlertTriangle, Key } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import { useAuthStore } from '../stores/authStore';
+import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 import { useDataStore } from '../stores/dataStore';
 import { useToastStore } from '../components/ui/Toast';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -23,6 +24,7 @@ export default function LandlordPortal() {
   } = useDataStore();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'maintenance' | 'vouchers'>('overview');
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   
   const handleLogout = () => {
     logout();
@@ -106,6 +108,17 @@ export default function LandlordPortal() {
             <span className="text-sm font-bold text-white">Peter Kamau</span>
             <span className="text-xs text-vedama-gold">Landlord Portal</span>
           </div>
+
+          <button 
+            onClick={() => setIsChangePasswordOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+            title="Change Password"
+          >
+            <Key size={18} /> <span className="hidden sm:inline">Change Password</span>
+          </button>
+          
+          <div className="h-8 w-px bg-white/20 mx-1"></div>
+
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-white/10 rounded-lg transition-colors"
@@ -114,6 +127,11 @@ export default function LandlordPortal() {
           </button>
         </div>
       </nav>
+
+      <ChangePasswordModal 
+        isOpen={isChangePasswordOpen} 
+        onClose={() => setIsChangePasswordOpen(false)} 
+      />
 
       {/* Main Container */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">

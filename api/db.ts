@@ -9,11 +9,11 @@ const { Pool } = pg;
 // Initial Seed Data
 const INITIAL_DATABASE = {
   users: [
-    { id: 'u1', name: 'James Mwangi', email: 'admin@vedama.co.ke', phone: '0712345678', role: 'admin', isActive: true, createdAt: '2024-01-01' },
-    { id: 'u2', name: 'Grace Wanjiku', email: 'finance@vedama.co.ke', phone: '0723456789', role: 'finance', isActive: true, createdAt: '2024-01-05' },
-    { id: 'u3', name: 'Peter Kamau', email: 'landlord@vedama.co.ke', phone: '0734567890', role: 'landlord', isActive: true, createdAt: '2024-01-10' },
-    { id: 'u4', name: 'Mary Njeri', email: 'client@vedama.co.ke', phone: '0745678901', role: 'client', isActive: true, createdAt: '2024-02-01' },
-    { id: 'u5', name: 'David Ochieng', email: 'provider@vedama.co.ke', phone: '0756789012', role: 'service_provider', isActive: true, createdAt: '2024-02-15' },
+    { id: 'u1', name: 'James Mwangi', email: 'admin@vedama.co.ke', phone: '0712345678', role: 'admin', isActive: true, createdAt: '2024-01-01', password: 'admin123' },
+    { id: 'u2', name: 'Grace Wanjiku', email: 'finance@vedama.co.ke', phone: '0723456789', role: 'finance', isActive: true, createdAt: '2024-01-05', password: 'finance123' },
+    { id: 'u3', name: 'Peter Kamau', email: 'landlord@vedama.co.ke', phone: '0734567890', role: 'landlord', isActive: true, createdAt: '2024-01-10', password: 'landlord123' },
+    { id: 'u4', name: 'Mary Njeri', email: 'client@vedama.co.ke', phone: '0745678901', role: 'client', isActive: true, createdAt: '2024-02-01', password: 'client123' },
+    { id: 'u5', name: 'David Ochieng', email: 'provider@vedama.co.ke', phone: '0756789012', role: 'service_provider', isActive: true, createdAt: '2024-02-15', password: 'provider123' },
   ],
   properties: [
     {
@@ -187,6 +187,7 @@ const INITIAL_DATABASE = {
     { id: 'bl1', reference: 'VDM-2024-001', amount: 500000, date: '2024-04-01', status: 'cleared' },
     { id: 'bl2', reference: 'VDM-2024-002', amount: 900000, date: '2024-03-20', status: 'cleared' },
   ],
+  otpCodes: [],
 };
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'db.json');
@@ -231,7 +232,34 @@ function getPool() {
   return null;
 }
 
-export async function getDb(): Promise<typeof INITIAL_DATABASE> {
+function migrateDb(db: any): { db: any; changed: boolean } {
+  let changed = false;
+  if (!db.users) db.users = [];
+  if (!db.otpCodes) {
+    db.otpCodes = [];
+    changed = true;
+  }
+
+  const DEMO_CREDENTIALS: Record<string, string> = {
+    'admin@vedama.co.ke': 'admin123',
+    'finance@vedama.co.ke': 'finance123',
+    'landlord@vedama.co.ke': 'landlord123',
+    'client@vedama.co.ke': 'client123',
+    'provider@vedama.co.ke': 'provider123',
+  };
+
+  db.users.forEach((user: any) => {
+    if (!user.password) {
+      user.password = DEMO_CREDENTIALS[user.email.toLowerCase()] || '123456';
+      changed = true;
+    }
+  });
+
+  return { db, changed };
+}
+
+export async function getDb(): Promise<any> {
+  let fetched: any = null;
   const pgPool = getPool();
 
   if (pgPool) {
@@ -248,54 +276,64 @@ export async function getDb(): Promise<typeof INITIAL_DATABASE> {
       // 2. Fetch the state
       const res = await pgPool.query('SELECT data FROM system_state WHERE id = 1');
       if (res.rows.length > 0) {
-        return res.rows[0].data;
+        fetched = res.rows[0].data;
+      } else {
+        // 3. Seed if table is empty (Auto-Seeding)
+        await pgPool.query('INSERT INTO system_state (id, data) VALUES (1, $1) ON CONFLICT (id) DO NOTHING', [
+          JSON.stringify(INITIAL_DATABASE),
+        ]);
+        fetched = INITIAL_DATABASE;
       }
-
-      // 3. Seed if table is empty (Auto-Seeding)
-      await pgPool.query('INSERT INTO system_state (id, data) VALUES (1, $1) ON CONFLICT (id) DO NOTHING', [
-        JSON.stringify(INITIAL_DATABASE),
-      ]);
-      return INITIAL_DATABASE;
     } catch (e) {
       console.error('Error with Supabase PostgreSQL operation, falling back to other layers:', e);
     }
   }
 
   // Fallback storage layers
-  const isVercel = !!process.env.BLOB_READ_WRITE_TOKEN;
+  if (!fetched) {
+    const isVercel = !!process.env.BLOB_READ_WRITE_TOKEN;
 
-  if (isVercel) {
-    try {
-      const blobs = await list({ token: process.env.BLOB_READ_WRITE_TOKEN });
-      const dbBlob = blobs.blobs.find((b) => b.pathname === 'db.json');
-      if (dbBlob) {
-        const response = await fetch(dbBlob.url);
-        if (response.ok) {
-          return await response.json();
+    if (isVercel) {
+      try {
+        const blobs = await list({ token: process.env.BLOB_READ_WRITE_TOKEN });
+        const dbBlob = blobs.blobs.find((b) => b.pathname === 'db.json');
+        if (dbBlob) {
+          const response = await fetch(dbBlob.url);
+          if (response.ok) {
+            fetched = await response.json();
+          }
         }
+        if (!fetched) {
+          // Seed first time
+          await put('db.json', JSON.stringify(INITIAL_DATABASE), {
+            access: 'public',
+            addRandomSuffix: false,
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+          });
+          fetched = INITIAL_DATABASE;
+        }
+      } catch (e) {
+        console.error('Error fetching from Vercel Blob:', e);
+        fetched = INITIAL_DATABASE;
       }
-      // Seed first time
-      await put('db.json', JSON.stringify(INITIAL_DATABASE), {
-        access: 'public',
-        addRandomSuffix: false,
-        token: process.env.BLOB_READ_WRITE_TOKEN,
-      });
-      return INITIAL_DATABASE;
-    } catch (e) {
-      console.error('Error fetching from Vercel Blob:', e);
-      return INITIAL_DATABASE;
-    }
-  } else {
-    // Local persistence
-    try {
-      await fs.access(LOCAL_DB_PATH);
-      const content = await fs.readFile(LOCAL_DB_PATH, 'utf8');
-      return JSON.parse(content);
-    } catch {
-      await fs.writeFile(LOCAL_DB_PATH, JSON.stringify(INITIAL_DATABASE, null, 2), 'utf8');
-      return INITIAL_DATABASE;
+    } else {
+      // Local persistence
+      try {
+        await fs.access(LOCAL_DB_PATH);
+        const content = await fs.readFile(LOCAL_DB_PATH, 'utf8');
+        fetched = JSON.parse(content);
+      } catch {
+        await fs.writeFile(LOCAL_DB_PATH, JSON.stringify(INITIAL_DATABASE, null, 2), 'utf8');
+        fetched = INITIAL_DATABASE;
+      }
     }
   }
+
+  const { db, changed } = migrateDb(fetched);
+  if (changed) {
+    await saveDb(db);
+  }
+  return db;
 }
 
 export async function saveDb(data: typeof INITIAL_DATABASE): Promise<void> {
