@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotAlert, setShowForgotAlert] = useState(false);
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -31,7 +32,7 @@ export default function LoginPage() {
     // Simulate network delay
     await new Promise(r => setTimeout(r, 800));
 
-    const result = login(email, password);
+    const result = await login(email, password);
     if (result.success) {
       const role = useAuthStore.getState().user?.role;
       if (role === 'client') navigate('/client');
@@ -42,13 +43,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-
-  const demoAccounts = [
-    { role: 'Admin', email: 'admin@vedama.co.ke', pwd: 'admin123' },
-    { role: 'Finance', email: 'finance@vedama.co.ke', pwd: 'finance123' },
-    { role: 'Client', email: 'client@vedama.co.ke', pwd: 'client123' },
-    { role: 'Landlord', email: 'landlord@vedama.co.ke', pwd: 'landlord123' },
-  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -75,6 +69,27 @@ export default function LoginPage() {
           </div>
         )}
 
+        {showForgotAlert && (
+          <div className="bg-status-warning-bg border border-status-warning/30 text-status-warning px-4 py-3 rounded-lg relative animate-scale-in">
+            <button
+              type="button"
+              onClick={() => setShowForgotAlert(false)}
+              className="absolute top-2 right-2.5 text-status-warning hover:opacity-85 transition-opacity font-bold text-xs"
+            >
+              ✕
+            </button>
+            <div className="flex items-start">
+              <AlertCircle size={18} className="mr-2 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-sm">Forgot Password?</div>
+                <div className="mt-1 text-xs font-normal text-text-secondary leading-relaxed">
+                  Password recovery is managed by the system administration team. Please contact <strong className="font-semibold text-text-primary">admin@vedama.co.ke</strong> to request a password reset.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -92,7 +107,13 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="password" className="label !mb-0">Password</label>
-                <a href="#" className="text-xs font-semibold text-vedama-gold hover:text-vedama-gold-dark transition-colors">Forgot password?</a>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotAlert(true)}
+                  className="text-xs font-semibold text-vedama-gold hover:text-vedama-gold-dark transition-colors cursor-pointer"
+                >
+                  Forgot password?
+                </button>
               </div>
               <input
                 id="password"
@@ -115,25 +136,6 @@ export default function LoginPage() {
             {!isLoading && <ArrowRight size={18} className="ml-2" />}
           </button>
         </form>
-
-        <div className="mt-8 border-t border-surface-border pt-6">
-          <div className="flex items-center justify-center mb-4 text-xs font-semibold uppercase text-text-muted tracking-wider">
-            <Shield size={14} className="mr-1.5" /> Demo Accounts
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {demoAccounts.map(acc => (
-              <button
-                key={acc.role}
-                type="button"
-                className="text-left px-3 py-2 bg-surface-bg border border-surface-border rounded-lg hover:border-vedama-gold hover:bg-vedama-gold/5 transition-colors"
-                onClick={() => { setEmail(acc.email); setPassword(acc.pwd); }}
-              >
-                <div className="font-bold text-text-primary">{acc.role}</div>
-                <div className="text-text-muted truncate">{acc.email}</div>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

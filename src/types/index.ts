@@ -124,6 +124,7 @@ export interface Landlord {
   pendingPayment: number;
   avatar?: string;
   address?: string;
+  company?: string;
   otherInfo?: string;
 }
 

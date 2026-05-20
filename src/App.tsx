@@ -1,8 +1,19 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import { ToastContainer } from './components/ui/Toast';
 
+
+// A helper component to scroll to top on every route navigation
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -30,9 +41,18 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import { useDataStore } from './stores/dataStore';
+
 export default function App() {
+  const loadFromServer = useDataStore((s) => s.loadFromServer);
+
+  React.useEffect(() => {
+    loadFromServer();
+  }, [loadFromServer]);
+
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />

@@ -9,6 +9,8 @@ import {
   mockServiceProviders, mockServiceRequests, mockVouchers, 
   mockLedger, mockCommunicationLogs, mockAuditLogs 
 } from '../lib/mockData';
+import api from '../lib/api';
+
 
 interface DataState {
   properties: Property[];
@@ -63,11 +65,75 @@ interface DataState {
   releaseGenericVoucherToBank: (id: string, releaseOfficer: string) => void;
   sendRentReminder: (tenantId: string) => void;
   confirmWorkCompletion: (id: string, party: 'tenant' | 'landlord') => void;
+  
+  // Backend Loader
+  loadFromServer: () => Promise<void>;
 }
 
 export const useDataStore = create<DataState>()(
   persist(
-    (set) => ({
+    (rawSet, get) => {
+      // API Helper to sync changes with the backend database
+      const syncWithServer = async (state: any) => {
+        try {
+          const { 
+            properties, transactions, tenants, landlords, serviceProviders, 
+            serviceRequests, vouchers, ledger, communicationLogs, auditLogs, 
+            clients, bankSyncStatus, bankAccountBalance, bankLogs 
+          } = state;
+          
+          await api.post('/data', {
+            state: {
+              properties, transactions, tenants, landlords, serviceProviders, 
+              serviceRequests, vouchers, ledger, communicationLogs, auditLogs, 
+              clients, bankSyncStatus, bankAccountBalance, bankLogs 
+            }
+          });
+        } catch (error) {
+          console.error('Failed to sync state to backend database:', error);
+        }
+      };
+
+      // API Helper to trigger a real multi-channel notification (WhatsApp, SMS, Email)
+      const triggerRealNotification = async (payload: { type: string; recipient: string; recipientName: string; subject?: string; message: string }) => {
+        try {
+          await api.post('/notify', payload);
+        } catch (error) {
+          console.error('Failed to dispatch automated notification:', error);
+        }
+      };
+
+      // Wrap set function to intercept state changes, trigger notifications and sync to database
+      const set = (fn: Partial<DataState> | ((state: DataState) => any)) => {
+        rawSet((state: DataState) => {
+          const nextState = typeof fn === 'function' ? fn(state) : fn;
+          
+          // Trigger any new real notifications created in this state change
+          if (nextState.communicationLogs && nextState.communicationLogs.length > state.communicationLogs.length) {
+            const newLogsCount = nextState.communicationLogs.length - state.communicationLogs.length;
+            const newLogs = nextState.communicationLogs.slice(0, newLogsCount);
+            
+            newLogs.forEach((log: any) => {
+              triggerRealNotification({
+                type: log.type,
+                recipient: log.recipient,
+                recipientName: log.recipientName,
+                subject: log.subject || 'System Notification',
+                message: log.message
+              });
+            });
+          }
+          
+          // Sync database state to server in background
+          setTimeout(() => {
+            syncWithServer(get());
+          }, 0);
+          
+          return nextState;
+        });
+      };
+
+      return {
       properties: mockProperties.map((p) => {
         if (p.id === 'p1') return { ...p, landlordId: 'l1', landlordAgreedPrice: 600000, lienholderBank: 'KCB Bank Kenya Ltd' };
         if (p.id === 'p2') return { ...p, landlordId: 'l1', landlordAgreedPrice: 320000, lienholderBank: 'NCBA Bank Ltd' };
@@ -857,8 +923,19 @@ export const useDataStore = create<DataState>()(
           auditLogs: [auditLog, ...state.auditLogs]
         };
       }),
-    }),
-    { name: 'vedama-data' }
+      loadFromServer: async () => {
+        try {
+          const response = await api.get('/data');
+          if (response.data.success && response.data.data) {
+            rawSet(response.data.data);
+          }
+        } catch (error) {
+          console.error('Failed to load database state from server:', error);
+        }
+      },
+    };
+  },
+  { name: 'vedama-data' }
   )
 );
 

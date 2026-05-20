@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface Toast {
   id: string;
@@ -43,6 +43,7 @@ export function ToastContainer() {
           className={`px-6 py-4 rounded-xl shadow-card-lg animate-slide-in-right flex items-center justify-between min-w-[300px] border ${
             toast.type === 'success' ? 'bg-status-success-bg border-status-success/20 text-status-success' :
             toast.type === 'error' ? 'bg-status-danger-bg border-status-danger/20 text-status-danger' :
+            toast.type === 'warning' ? 'bg-amber-50/90 border-amber-200/50 text-amber-800' :
             'bg-surface-bg border-surface-border text-text-primary'
           }`}
         >

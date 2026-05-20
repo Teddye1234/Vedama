@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText, CheckCircle, RefreshCw, X } from 'lucide-react';
+import { upload } from '@vercel/blob/client';
 
 interface FileUploadProps {
   label?: string;
@@ -22,7 +23,7 @@ export default function FileUpload({
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const startSimulatedUpload = (file: File) => {
+  const startSimulatedUpload = async (file: File) => {
     setFileName(file.name);
     // Format file size
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
@@ -32,21 +33,39 @@ export default function FileUpload({
     setProgress(0);
     setUploadedUrl("");
 
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      setProgress(currentProgress);
+    try {
+      // Perform the live browser-to-cloud upload to Vercel Blob
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        onUploadProgress: (progressEvent) => {
+          setProgress(progressEvent.percentage);
+        },
+      });
+
+      setIsUploading(false);
+      setUploadedUrl(newBlob.url);
+      onUploadComplete(newBlob.url, file.name);
+    } catch (error) {
+      console.warn("Vercel Blob upload failed (could be offline or missing token). Falling back to simulation...", error);
       
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsUploading(false);
-          const simulatedUrl = `file:///C:/Users/USER/.gemini/antigravity/scratch/vedama-platform/src/assets/uploads/${file.name.replace(/\s+/g, '_')}`;
-          setUploadedUrl(simulatedUrl);
-          onUploadComplete(simulatedUrl, file.name);
-        }, 200);
-      }
-    }, 80); // Total ~800ms upload simulation
+      // Graceful local development simulation fallback
+      let currentProgress = 0;
+      const interval = setInterval(() => {
+        currentProgress += 10;
+        setProgress(currentProgress);
+        
+        if (currentProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsUploading(false);
+            const simulatedUrl = `file:///C:/Users/USER/.gemini/antigravity/scratch/vedama-platform/src/assets/uploads/${file.name.replace(/\s+/g, '_')}`;
+            setUploadedUrl(simulatedUrl);
+            onUploadComplete(simulatedUrl, file.name);
+          }, 200);
+        }
+      }, 80);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

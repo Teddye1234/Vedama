@@ -50,19 +50,30 @@ export default function PublicNavbar() {
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => {
               const isHash = link.path.startsWith('/#');
-              const Component = isHash ? 'a' : Link;
-              const props = isHash ? { href: link.path } : { to: link.path };
+              const className = `text-sm font-semibold transition-colors ${
+                isScrolled || location.pathname !== '/' ? 'text-text-primary hover:text-vedama-emerald' : 'text-white/90 hover:text-white'
+              }`;
+
+              if (isHash) {
+                return (
+                  <a 
+                    key={link.name}
+                    href={link.path}
+                    className={className}
+                  >
+                    {link.name}
+                  </a>
+                );
+              }
 
               return (
-                <Component 
+                <Link 
                   key={link.name}
-                  {...props}
-                  className={`text-sm font-semibold transition-colors ${
-                    isScrolled || location.pathname !== '/' ? 'text-text-primary hover:text-vedama-emerald' : 'text-white/90 hover:text-white'
-                  }`}
+                  to={link.path}
+                  className={className}
                 >
                   {link.name}
-                </Component>
+                </Link>
               );
             })}
             <Link to="/login" className={`px-5 py-2.5 rounded-button font-semibold text-sm transition-all ${
@@ -92,17 +103,28 @@ export default function PublicNavbar() {
           <div className="px-4 pt-2 pb-6 space-y-1">
             {navLinks.map((link) => {
               const isHash = link.path.startsWith('/#');
-              const Component = isHash ? 'a' : Link;
-              const props = isHash ? { href: link.path } : { to: link.path };
+              const className = "block px-3 py-3 text-base font-medium text-text-primary hover:text-vedama-emerald hover:bg-surface-hover rounded-md";
+
+              if (isHash) {
+                return (
+                  <a
+                    key={link.name}
+                    href={link.path}
+                    className={className}
+                  >
+                    {link.name}
+                  </a>
+                );
+              }
 
               return (
-                <Component
+                <Link
                   key={link.name}
-                  {...props}
-                  className="block px-3 py-3 text-base font-medium text-text-primary hover:text-vedama-emerald hover:bg-surface-hover rounded-md"
+                  to={link.path}
+                  className={className}
                 >
                   {link.name}
-                </Component>
+                </Link>
               );
             })}
             <div className="pt-4 mt-2 border-t border-surface-border">

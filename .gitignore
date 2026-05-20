@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+db.json
+scratch/
+.env
+.env.production
+.env.local
+.env.development.local
+
