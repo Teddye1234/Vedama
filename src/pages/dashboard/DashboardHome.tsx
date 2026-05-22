@@ -213,11 +213,11 @@ export default function DashboardHome() {
                   <div className="absolute -left-1.5 top-1 w-3 h-3 bg-vedama-emerald rounded-full border border-white shadow-sm ring-2 ring-emerald-50"></div>
                   <div className="flex justify-between items-center text-[10px]">
                     <span className="font-bold uppercase tracking-wider text-[8px] text-vedama-gold-dark bg-amber-50 px-1 border border-vedama-gold/20 rounded">
-                      {act.action.replace(/_/g, ' ')}
+                      {(act.action || '').replace(/_/g, ' ')}
                     </span>
-                    <span className="text-text-muted">{formatDate(act.timestamp)}</span>
+                    <span className="text-text-muted">{formatDate(act.timestamp || new Date().toISOString())}</span>
                   </div>
-                  <p className="text-text-secondary text-[11px] leading-normal">{act.details}</p>
+                  <p className="text-text-secondary text-[11px] leading-normal">{act.details || ''}</p>
                 </div>
               ))}
 

@@ -31,3 +31,5 @@ scratch/
 .env.local
 .env.development.local
 
+dist-api/
+*.tsbuildinfo

@@ -7,11 +7,16 @@ export default function AuditPage() {
   const { auditLogs } = useDataStore();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredLogs = auditLogs.filter(log => 
-    log.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.module.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = auditLogs.filter(log => {
+    const userName = log.userName || '';
+    const action = log.action || '';
+    const module = log.module || '';
+    return (
+      userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      module.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -61,22 +66,22 @@ export default function AuditPage() {
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-surface-hover transition-colors">
                   <td className="table-cell py-4 whitespace-nowrap">
-                    <span className="text-text-primary">{formatDate(log.timestamp)}</span>
-                    <span className="text-text-muted ml-2">{formatDateTime(log.timestamp).split(',')[1]}</span>
+                    <span className="text-text-primary">{formatDate(log.timestamp || new Date().toISOString())}</span>
+                    <span className="text-text-muted ml-2">{(formatDateTime(log.timestamp || new Date().toISOString()).split(',')[1] || '')}</span>
                   </td>
                   <td className="table-cell py-4">
-                    <div className="font-semibold text-text-primary font-body">{log.userName}</div>
-                    <div className="text-xs text-text-muted font-body mt-0.5">{log.userId}</div>
+                    <div className="font-semibold text-text-primary font-body">{log.userName || ''}</div>
+                    <div className="text-xs text-text-muted font-body mt-0.5">{log.userId || ''}</div>
                   </td>
                   <td className="table-cell py-4">
-                    <span className="px-2 py-1 bg-surface-border/50 rounded text-xs font-semibold uppercase tracking-wider">{log.module}</span>
+                    <span className="px-2 py-1 bg-surface-border/50 rounded text-xs font-semibold uppercase tracking-wider">{log.module || ''}</span>
                   </td>
                   <td className="table-cell py-4">
-                    <div className="font-bold text-vedama-emerald mb-1">{log.action}</div>
-                    <div className="text-text-secondary truncate max-w-[300px]">{log.details}</div>
+                    <div className="font-bold text-vedama-emerald mb-1">{log.action || ''}</div>
+                    <div className="text-text-secondary truncate max-w-[300px]">{log.details || ''}</div>
                   </td>
                   <td className="table-cell py-4 text-text-muted">
-                    {log.ipAddress}
+                    {log.ipAddress || ''}
                   </td>
                 </tr>
               ))}

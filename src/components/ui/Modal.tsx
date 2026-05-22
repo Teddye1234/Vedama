@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,11 +13,12 @@ const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl'
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 md:p-10 overflow-y-auto" onClick={onClose}>
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-y-auto" onClick={onClose}>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" />
       <div
-        className={`relative bg-white rounded-3xl shadow-card-lg w-full ${sizes[size]} my-auto overflow-hidden flex flex-col animate-scale-in`}
+        className={`relative bg-white rounded-3xl shadow-card-lg w-full ${sizes[size]} my-auto overflow-hidden flex flex-col animate-scale-in z-10`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-surface-border bg-white sticky top-0 z-10 shrink-0">
@@ -27,6 +29,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
         </div>
         <div className="p-6 sm:p-8 overflow-y-auto flex-grow max-h-[75vh]">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

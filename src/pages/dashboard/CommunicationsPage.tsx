@@ -31,10 +31,14 @@ export default function CommunicationsPage() {
   const [transmissionStatusMessage, setTransmissionStatusMessage] = useState('');
 
   const filteredLogs = communicationLogs.filter(log => {
-    const matchesSearch = log.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          log.recipient.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesChannel = channelFilter === 'all' || log.type === channelFilter;
+    const recipientName = log.recipientName || '';
+    const subject = log.subject || '';
+    const recipient = log.recipient || '';
+    const type = log.type || '';
+    const matchesSearch = recipientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          recipient.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesChannel = channelFilter === 'all' || type === channelFilter;
     return matchesSearch && matchesChannel;
   });
 
@@ -456,25 +460,25 @@ export default function CommunicationsPage() {
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-surface-hover transition-colors text-xs">
                   <td className="table-cell py-4 whitespace-nowrap">
-                    <div className="font-semibold text-text-primary text-sm">{formatDate(log.sentAt)}</div>
-                    <div className="text-[10px] text-text-muted mt-0.5">{formatDateTime(log.sentAt).split(',')[1]}</div>
+                    <div className="font-semibold text-text-primary text-sm">{formatDate(log.sentAt || new Date().toISOString())}</div>
+                    <div className="text-[10px] text-text-muted mt-0.5">{(formatDateTime(log.sentAt || new Date().toISOString()).split(',')[1] || '')}</div>
                   </td>
                   <td className="table-cell py-4 font-semibold uppercase">
                     <div className="flex items-center gap-2">
                       {log.type === 'whatsapp' ? <MessageSquare size={16} className="text-green-600 font-bold" /> : <Mail size={16} className="text-blue-600 font-bold" />}
-                      <span>{log.type}</span>
+                      <span>{log.type || ''}</span>
                     </div>
                   </td>
                   <td className="table-cell py-4">
-                    <div className="font-bold text-text-primary text-sm">{log.recipientName}</div>
-                    <div className="text-[10px] text-text-muted mt-0.5 font-mono">{log.recipient}</div>
+                    <div className="font-bold text-text-primary text-sm">{log.recipientName || ''}</div>
+                    <div className="text-[10px] text-text-muted mt-0.5 font-mono">{log.recipient || ''}</div>
                   </td>
                   <td className="table-cell py-4 max-w-[350px]">
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-vedama-gold mb-1">{log.category.replace('_', ' ')}</div>
-                    <p className="font-medium leading-relaxed text-text-secondary whitespace-normal">{log.message}</p>
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-vedama-gold mb-1">{(log.category || '').replace('_', ' ')}</div>
+                    <p className="font-medium leading-relaxed text-text-secondary whitespace-normal">{log.message || ''}</p>
                   </td>
                   <td className="table-cell py-4">
-                    <Badge variant={statusToBadge(log.status)}>{log.status.toUpperCase()}</Badge>
+                    <Badge variant={statusToBadge(log.status || 'sent')}>{(log.status || 'sent').toUpperCase()}</Badge>
                   </td>
                 </tr>
               ))}

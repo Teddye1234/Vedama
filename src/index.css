@@ -219,3 +219,55 @@ h1, h2, h3, h4, h5, h6 {
 .animate-count-up {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ===== Print Media Styles ===== */
+@media print {
+  /* Hide sidebar, topbar, buttons, filter sections, selector sidebars, tabs, chatbot and other non-print elements */
+  nav, 
+  aside, 
+  header, 
+  .no-print, 
+  button, 
+  input, 
+  select, 
+  .btn-primary, 
+  .btn-secondary, 
+  .btn-gold, 
+  .btn-danger,
+  .btn-emerald, 
+  .lg\:col-span-1,
+  .border-b-2,
+  .tabs-container,
+  .floating-chatbot,
+  iframe,
+  .chatbot-container,
+  .react-toast-notifications__container,
+  .no-print-area {
+    display: none !important;
+  }
+
+  /* Reset main layouts so the printed elements take full width */
+  body, 
+  main, 
+  .main-content,
+  .lg\:col-span-2,
+  #printable-statement,
+  .card-static {
+    background: transparent !important;
+    color: black !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Specific formatting for the certified individual statement */
+  #printable-statement {
+    border: 2px solid #0F3D2E !important;
+    padding: 2rem !important;
+    border-radius: 1rem !important;
+    page-break-inside: avoid;
+  }
+}

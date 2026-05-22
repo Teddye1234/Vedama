@@ -381,6 +381,52 @@ export default function PropertiesAdminPage() {
               </div>
             </div>
 
+            {/* ── PROPERTY IMAGES — placed prominently after title ── */}
+            <div className="col-span-2 bg-surface-bg p-4 rounded-2xl border-2 border-dashed border-vedama-emerald/40 space-y-4">
+              <h4 className="font-bold uppercase tracking-wider text-vedama-emerald text-[10px] flex items-center gap-1.5">
+                🖼️ Property Showcase Photos <span className="text-text-muted normal-case font-normal">(Upload images that clients will see on the listing)</span>
+              </h4>
+
+              {/* Preview grid */}
+              {formImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {formImages.map((imgUrl: string, i: number) => (
+                    <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] border border-surface-border shadow-sm bg-surface-bg">
+                      <img src={imgUrl} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
+                      <button
+                        type="button"
+                        onClick={() => setFormImages(formImages.filter((_: string, idx: number) => idx !== i))}
+                        className="absolute top-1.5 right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-sm cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove photo"
+                      >
+                        <X size={11} />
+                      </button>
+                      {i === 0 && (
+                        <span className="absolute bottom-1.5 left-1.5 text-[9px] font-bold bg-vedama-emerald text-white px-1.5 py-0.5 rounded-full">Cover</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload dropzone */}
+              <FileUpload
+                label={formImages.length === 0 ? '📷 Upload First Property Photo' : '+ Add Another Photo'}
+                accept="image/*"
+                onUploadComplete={(url) => {
+                  if (url) {
+                    setFormImages((prev: string[]) => [...prev, url]);
+                    addToast('Photo added to gallery!', 'success');
+                  }
+                }}
+              />
+
+              {formImages.length === 0 && (
+                <p className="text-[10px] text-text-muted text-center">⚠️ At least one photo is recommended for the public listing</p>
+              )}
+            </div>
+
             {/* Land metrics and Pricing */}
             <div className="col-span-1 bg-surface-bg p-4 rounded-2xl border border-surface-border space-y-3">
               <h4 className="font-bold uppercase tracking-wider text-text-primary text-[10px]">📏 Land Dimensions & Retail Pricing</h4>
@@ -626,44 +672,7 @@ export default function PropertiesAdminPage() {
               </div>
             </div>
 
-            {/* Property Image Gallery Showcase */}
-            <div className="col-span-2 bg-surface-bg p-4 rounded-2xl border border-surface-border space-y-4 text-xs">
-              <h4 className="font-bold uppercase tracking-wider text-text-primary text-[10px] flex items-center gap-1.5 font-bold">
-                🖼️ Property Asset Showcase Gallery
-              </h4>
-              
-              {/* Image Grid */}
-              {formImages.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {formImages.map((imgUrl: string, i: number) => (
-                    <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] border border-surface-border shadow-sm">
-                      <img src={imgUrl} alt={`Showcase ${i+1}`} className="w-full h-full object-cover" />
-                      <button 
-                        type="button"
-                        onClick={() => setFormImages(formImages.filter((_: string, idx: number) => idx !== i))}
-                        className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm cursor-pointer"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Upload Dropzone */}
-              <div>
-                <FileUpload 
-                  label="Upload New Property Photo" 
-                  accept="image/*"
-                  onUploadComplete={(url) => {
-                    if (url) {
-                      setFormImages((prev: string[]) => [...prev, url]);
-                      addToast("Photo uploaded and added to showcase gallery!", "success");
-                    }
-                  }} 
-                />
-              </div>
-            </div>
+            {/* Image gallery moved to top of form — removed from here */}
 
             <div className="col-span-2">
               <label className="label">Public Project Description</label>

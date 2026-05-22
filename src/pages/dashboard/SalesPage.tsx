@@ -241,9 +241,23 @@ export default function SalesPage() {
       updatedAt: new Date().toISOString()
     });
 
-    // Splitting Logic: 10% Company Commission, 90% Landlord Escrow payout
-    const landlordCut = paymentAmount * 0.90;
-    const companyCut = paymentAmount * 0.10;
+    // Split payments - priority allocation to landlord:
+    // Minimum agreed price for this transaction's plots
+    const property = properties.find(p => p.id === selectedTx.propertyId);
+    const agreedUnit = property?.landlordAgreedPrice || (selectedTx.unitPrice * 0.75);
+    const landlordTotalTarget = agreedUnit * selectedTx.plotCount;
+    
+    // How much has already been allocated to the landlord before this payment?
+    const previousTotalAllocatedToLandlord = Math.min(landlordTotalTarget, selectedTx.amountPaid);
+    
+    // Out of the new total paid (updatedPaid), how much goes to the landlord?
+    const newTotalAllocatedToLandlord = Math.min(landlordTotalTarget, updatedPaid);
+    
+    // Portion of this payment that goes to the landlord
+    const landlordCut = newTotalAllocatedToLandlord - previousTotalAllocatedToLandlord;
+    
+    // Portion of this payment that goes to company commission
+    const companyCut = paymentAmount - landlordCut;
 
     // Log split transactions directly to ledger
     addLedgerEntry({
@@ -255,8 +269,7 @@ export default function SalesPage() {
       landlordShare: landlordCut,
       companyCommission: companyCut,
       date: new Date().toISOString().split('T')[0],
-      status: 'reconciled',
-      costCategory: 'rents_directors'
+      status: 'reconciled'
     });
 
     // Write to audit log
@@ -266,7 +279,7 @@ export default function SalesPage() {
       userName: user?.name || 'Administrator',
       action: 'RECORD_POS_PAYMENT',
       module: 'SalesPOS',
-      details: `Recorded KES ${paymentAmount.toLocaleString()} installment for ${selectedTx.reference}. Split: KES ${landlordCut.toLocaleString()} (90% Landowner) | KES ${companyCut.toLocaleString()} (10% Corp Split to CEO Francis Mathea).`,
+      details: `Recorded KES ${paymentAmount.toLocaleString()} installment for ${selectedTx.reference}. Split: KES ${landlordCut.toLocaleString()} (Landowner Priority) | KES ${companyCut.toLocaleString()} (Company Commission Split).`,
       timestamp: new Date().toISOString(),
       ipAddress: '127.0.0.1'
     });
@@ -642,24 +655,38 @@ export default function SalesPage() {
             </div>
 
             {/* Split Ledger Payout Estimates */}
-            <div className="bg-amber-50/50 p-4 rounded-2xl border border-vedama-gold/25 space-y-3">
-              <h4 className="font-bold uppercase tracking-wider text-[10px] text-vedama-gold-dark flex items-center gap-1.5">
-                <Landmark size={14} className="text-vedama-emerald" /> Split Payment Disbursement Distribution
-              </h4>
+            {(() => {
+              const prop = properties.find(p => p.id === selectedTx.propertyId);
+              const agreedUnitVal = prop?.landlordAgreedPrice || (selectedTx.unitPrice * 0.75);
+              const landlordTotalTargetVal = agreedUnitVal * selectedTx.plotCount;
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-3 rounded-xl border border-surface-border space-y-1">
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-text-muted">Landowner Payout Share (90%)</div>
-                  <div className="text-sm font-bold text-text-primary">{formatCurrency(selectedTx.amountPaid * 0.90)}</div>
-                  <div className="text-[9px] text-text-muted mt-1">Pending Balance: {formatCurrency(selectedTx.balance * 0.90)}</div>
+              const allocatedLandlord = Math.min(landlordTotalTargetVal, selectedTx.amountPaid);
+              const pendingLandlord = Math.max(0, landlordTotalTargetVal - allocatedLandlord);
+              
+              const allocatedCommission = Math.max(0, selectedTx.amountPaid - allocatedLandlord);
+              const pendingCommission = Math.max(0, (selectedTx.totalAmount - landlordTotalTargetVal) - allocatedCommission);
+
+              return (
+                <div className="bg-amber-50/50 p-4 rounded-2xl border border-vedama-gold/25 space-y-3">
+                  <h4 className="font-bold uppercase tracking-wider text-[10px] text-vedama-gold-dark flex items-center gap-1.5">
+                    <Landmark size={14} className="text-vedama-emerald" /> Split Payment Disbursement Distribution
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white p-3 rounded-xl border border-surface-border space-y-1">
+                      <div className="text-[8px] font-bold uppercase tracking-wider text-text-muted">Landowner Payout Share (Priority)</div>
+                      <div className="text-sm font-bold text-text-primary">{formatCurrency(allocatedLandlord)}</div>
+                      <div className="text-[9px] text-text-muted mt-1">Pending Balance: {formatCurrency(pendingLandlord)}</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-surface-border space-y-1">
+                      <div className="text-[8px] font-bold uppercase tracking-wider text-text-muted">Corporate Commission Split</div>
+                      <div className="text-sm font-bold text-vedama-emerald">{formatCurrency(allocatedCommission)}</div>
+                      <div className="text-[9px] text-text-muted mt-1">Pending Commission: {formatCurrency(pendingCommission)}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border border-surface-border space-y-1">
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-text-muted">Corporate Commission Split (10%)</div>
-                  <div className="text-sm font-bold text-vedama-emerald">{formatCurrency(selectedTx.amountPaid * 0.10)}</div>
-                  <div className="text-[9px] text-text-muted mt-1">Pending Commission: {formatCurrency(selectedTx.balance * 0.10)}</div>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               

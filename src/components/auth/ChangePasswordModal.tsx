@@ -14,6 +14,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
   const { addToast } = useToastStore();
 
   const [otp, setOtp] = useState('');
+  const [sandboxOtp, setSandboxOtp] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +26,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
     if (isOpen && user?.email) {
       setError('');
       setOtp('');
+      setSandboxOtp(null);
       setNewPassword('');
       setConfirmPassword('');
       handleSendOtp();
@@ -50,7 +52,14 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
     const result = await requestOtp(user.email, user.phone, 'change');
     if (result.success) {
       setResendTimer(60);
-      addToast('OTP verification code sent to your active email/phone.', 'info');
+      if (result.simulatedOtp) {
+        setOtp(result.simulatedOtp);
+        setSandboxOtp(result.simulatedOtp);
+        addToast(`[Sandbox Mode] OTP code auto-filled: ${result.simulatedOtp}`, 'info');
+      } else {
+        setSandboxOtp(null);
+        addToast('OTP verification code sent to your active email/phone.', 'info');
+      }
     } else {
       setError(result.error || 'Failed to dispatch verification OTP.');
     }
@@ -113,6 +122,17 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
             />
+            {sandboxOtp && (
+              <div className="mt-3 bg-blue-50 border border-blue-150 p-3 rounded-2xl flex flex-col items-center gap-1 text-center animate-pulse shadow-sm">
+                <span className="text-[9px] font-extrabold text-blue-600 uppercase tracking-widest">Sandbox Mode Active</span>
+                <p className="text-[10px] text-blue-800 leading-normal">
+                  No SMS/Email credentials configured. Enter simulated code:
+                </p>
+                <div className="font-mono text-base font-black text-blue-700 bg-blue-100/60 px-3 py-1 rounded-xl tracking-[0.2em] border border-blue-200 mt-1">
+                  {sandboxOtp}
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

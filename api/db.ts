@@ -234,7 +234,10 @@ function getPool() {
 
 function migrateDb(db: any): { db: any; changed: boolean } {
   let changed = false;
-  if (!db.users) db.users = [];
+  if (!db.users || db.users.length === 0) {
+    db.users = [...INITIAL_DATABASE.users];
+    changed = true;
+  }
   if (!db.otpCodes) {
     db.otpCodes = [];
     changed = true;

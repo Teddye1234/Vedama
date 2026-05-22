@@ -8,7 +8,8 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  requestOtp: (email: string, phone: string | undefined, purpose: 'signup' | 'reset' | 'change') => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (updates: Partial<User>) => void;
+  requestOtp: (email: string, phone: string | undefined, purpose: 'signup' | 'reset' | 'change') => Promise<{ success: boolean; error?: string; simulatedOtp?: string }>;
   verifyAndSignUp: (name: string, email: string, phone: string, password: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   verifyAndResetPassword: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   verifyAndChangePassword: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -33,11 +34,14 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       logout: () => set({ user: null, isAuthenticated: false }),
+      updateProfile: (updates) => set((state) => ({
+        user: state.user ? { ...state.user, ...updates } : null
+      })),
       requestOtp: async (email, phone, purpose) => {
         try {
           const response = await api.post(`/auth?action=request-otp`, { email, phone, purpose });
           if (response.data.success) {
-            return { success: true };
+            return { success: true, simulatedOtp: response.data._sandbox?.simulatedOtp };
           }
           return { success: false, error: response.data.error || 'Failed to request verification code.' };
         } catch (error: any) {

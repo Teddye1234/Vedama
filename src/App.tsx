@@ -30,7 +30,7 @@ import CommunicationsPage from './pages/dashboard/CommunicationsPage';
 import ReportsPage from './pages/dashboard/ReportsPage';
 import AuditPage from './pages/dashboard/AuditPage';
 import PropertiesAdminPage from './pages/dashboard/PropertiesAdminPage';
-import UserMgmtPage from './pages/dashboard/UserMgmtPage';
+import SettingsPage from './pages/dashboard/SettingsPage';
 import ClientPortal from './pages/ClientPortal';
 import LandlordPortal from './pages/LandlordPortal';
 import ContactPage from './pages/ContactPage';
@@ -74,7 +74,7 @@ export default function App() {
           <Route path="communications" element={<CommunicationsPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="audit" element={<AuditPage />} />
-          <Route path="users" element={<UserMgmtPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         {/* Portals */}

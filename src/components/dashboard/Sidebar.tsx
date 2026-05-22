@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Map as MapIcon, 
@@ -11,7 +11,8 @@ import {
   BarChart3, 
   ShieldAlert,
   X,
-  Users
+  Users,
+  Settings
 } from 'lucide-react';
 import Logo from '../ui/Logo';
 import { useAuthStore } from '../../stores/authStore';
@@ -23,11 +24,12 @@ interface SidebarProps {
 export default function Sidebar({ onClose }: SidebarProps) {
   const user = useAuthStore(s => s.user);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'finance'] },
     { name: 'Properties', path: '/dashboard/properties', icon: MapIcon, roles: ['admin'] },
-    { name: 'User Management', path: '/dashboard/users', icon: Users, roles: ['admin'] },
+    { name: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['admin', 'finance'] },
     { name: 'Land Sales POS', path: '/dashboard/sales', icon: CircleDollarSign, roles: ['admin', 'finance'] },
     { name: 'Finance Ledger', path: '/dashboard/finance', icon: Wallet, roles: ['admin', 'finance'] },
     { name: 'Property Mgmt', path: '/dashboard/property-mgmt', icon: Building, roles: ['admin'] },
@@ -83,10 +85,24 @@ export default function Sidebar({ onClose }: SidebarProps) {
       </div>
 
       <div className="p-4 border-t border-white/10 shrink-0">
-        <div className="glass-dark rounded-2xl p-4 flex items-center gap-3 hover:bg-white/10 transition-colors cursor-pointer group">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-vedama-gold to-vedama-gold-dark flex items-center justify-center font-heading font-bold text-lg text-white shadow-md group-hover:scale-105 transition-transform">
-            {user?.name?.charAt(0) || 'U'}
-          </div>
+        <div 
+          onClick={() => {
+            navigate('/dashboard/settings');
+            if (window.innerWidth < 1024) onClose();
+          }}
+          className="glass-dark rounded-2xl p-4 flex items-center gap-3 hover:bg-white/10 transition-colors cursor-pointer group"
+        >
+          {user?.avatar ? (
+            <img 
+              src={user.avatar} 
+              className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-md group-hover:scale-105 transition-transform" 
+              alt="User Avatar" 
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-vedama-gold to-vedama-gold-dark flex items-center justify-center font-heading font-bold text-lg text-white shadow-md group-hover:scale-105 transition-transform">
+              {user?.name?.charAt(0) || 'U'}
+            </div>
+          )}
           <div className="flex flex-col overflow-hidden">
             <span className="text-sm font-semibold truncate text-white">{user?.name}</span>
             <span className="text-xs text-vedama-gold uppercase tracking-wider truncate font-medium">{user?.role.replace('_', ' ')}</span>

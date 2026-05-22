@@ -123,7 +123,16 @@ export default async function handler(
       // Print to system console for high visibility in local development & simulation
       console.log(`[OTP DISPATCH] Destination: ${email} | Purpose: ${purpose.toUpperCase()} | Code: ${otpCode}`);
 
-      return res.status(200).json({ success: true, message: 'OTP verification code dispatched successfully.' });
+      const isSandbox = !process.env.TWILIO_ACCOUNT_SID &&
+                        !process.env.AFRICASTALKING_USERNAME &&
+                        !process.env.RESEND_API_KEY &&
+                        !process.env.SMTP_HOST;
+
+      return res.status(200).json({
+        success: true,
+        message: 'OTP verification code dispatched successfully.',
+        ...(isSandbox ? { _sandbox: { simulatedOtp: otpCode } } : {})
+      });
     }
 
     // 3. Verify OTP & Sign Up Client
@@ -266,6 +275,65 @@ export default async function handler(
       await saveDb(db);
 
       return res.status(200).json({ success: true, message: 'Password has been updated successfully.' });
+    }
+
+    // 6. Admin Reset Password (no OTP required — admin authority)
+    if (req.method === 'POST' && action === 'admin-reset-password') {
+      const { targetEmail, newPassword, adminId } = req.body || {};
+
+      if (!targetEmail || !newPassword) {
+        return res.status(400).json({ success: false, error: 'Target email and new password are required.' });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+      }
+
+      const user = db.users.find((u: any) => u.email.toLowerCase() === targetEmail.toLowerCase());
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'No user account found with this email.' });
+      }
+
+      user.password = newPassword;
+      await saveDb(db);
+
+      console.log(`[ADMIN RESET] Admin (${adminId || 'unknown'}) reset password for: ${targetEmail}`);
+      return res.status(200).json({ success: true, message: `Password for ${user.name} reset successfully.` });
+    }
+
+    // 7. Admin Create User with Password
+    if (req.method === 'POST' && action === 'admin-create-user') {
+      const { id, name, email, phone, role, password, isActive } = req.body || {};
+
+      if (!email || !password || !name) {
+        return res.status(400).json({ success: false, error: 'Name, email and password are required.' });
+      }
+
+      // Check if email already exists
+      const existing = db.users.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+      if (existing) {
+        // User was already added by the dataStore — just update the password
+        existing.password = password;
+        await saveDb(db);
+        return res.status(200).json({ success: true, message: 'User password set.' });
+      }
+
+      // Create full user record with password
+      const newUser = {
+        id: id || `u-${Math.random().toString(36).substring(2, 9)}`,
+        name,
+        email: email.toLowerCase(),
+        phone: phone || '',
+        role: role || 'client',
+        isActive: isActive !== false,
+        createdAt: new Date().toISOString().split('T')[0],
+        password,
+      };
+
+      if (!db.users) db.users = [];
+      db.users.push(newUser);
+      await saveDb(db);
+
+      return res.status(200).json({ success: true, user: newUser });
     }
 
     return res.status(400).json({ success: false, error: 'Invalid request action or method.' });

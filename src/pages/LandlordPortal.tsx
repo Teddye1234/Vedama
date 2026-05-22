@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Bell, DollarSign, Wrench, CheckCircle, Landmark, ShieldAlert, Award, FileText, AlertTriangle, Key } from 'lucide-react';
+import { LogOut, Bell, DollarSign, Wrench, CheckCircle, Landmark, ShieldAlert, Award, FileText, AlertTriangle, Key, Settings } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import { useAuthStore } from '../stores/authStore';
-import ChangePasswordModal from '../components/auth/ChangePasswordModal';
+import SettingsPage from './dashboard/SettingsPage';
 import { useDataStore } from '../stores/dataStore';
 import { useToastStore } from '../components/ui/Toast';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -23,8 +23,7 @@ export default function LandlordPortal() {
     confirmWorkCompletion 
   } = useDataStore();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'maintenance' | 'vouchers'>('overview');
-  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'maintenance' | 'vouchers' | 'settings'>('overview');
   
   const handleLogout = () => {
     logout();
@@ -104,17 +103,37 @@ export default function LandlordPortal() {
             )}
           </button>
           <div className="h-8 w-px bg-white/20 mx-2"></div>
-          <div className="hidden sm:flex flex-col items-end mr-4">
-            <span className="text-sm font-bold text-white">Peter Kamau</span>
-            <span className="text-xs text-vedama-gold">Landlord Portal</span>
+          
+          <div className="flex items-center gap-3">
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-sm" 
+                alt="User Avatar" 
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center font-bold border border-white/10 shadow-sm">
+                {(user?.name || 'Peter Kamau').charAt(0)}
+              </div>
+            )}
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-sm font-bold text-white">{user?.name || 'Peter Kamau'}</span>
+              <span className="text-xs text-vedama-gold">Landlord Portal</span>
+            </div>
           </div>
 
+          <div className="h-8 w-px bg-white/20 mx-1"></div>
+
           <button 
-            onClick={() => setIsChangePasswordOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-            title="Change Password"
+            onClick={() => setActiveTab(activeTab === 'settings' ? 'overview' : 'settings')}
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'settings'
+                ? 'bg-white/20 text-vedama-gold font-bold'
+                : 'hover:bg-white/10 hover:text-white'
+            }`}
+            title={activeTab === 'settings' ? 'Back to Overview' : 'Settings'}
           >
-            <Key size={18} /> <span className="hidden sm:inline">Change Password</span>
+            <Settings size={18} /> <span className="hidden sm:inline">Settings</span>
           </button>
           
           <div className="h-8 w-px bg-white/20 mx-1"></div>
@@ -127,11 +146,6 @@ export default function LandlordPortal() {
           </button>
         </div>
       </nav>
-
-      <ChangePasswordModal 
-        isOpen={isChangePasswordOpen} 
-        onClose={() => setIsChangePasswordOpen(false)} 
-      />
 
       {/* Main Container */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -232,6 +246,17 @@ export default function LandlordPortal() {
             onClick={() => setActiveTab('vouchers')}
           >
             <FileText size={14} /> Monthly Payout Vouchers
+          </button>
+
+          <button 
+            className={`py-3 px-6 font-semibold text-xs transition-colors flex items-center gap-1.5 ${
+              activeTab === 'settings' 
+                ? 'text-vedama-emerald border-b-2 border-vedama-emerald bg-surface-hover/50 font-bold' 
+                : 'text-text-secondary hover:bg-surface-hover'
+            }`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <Settings size={14} /> Account Settings
           </button>
         </div>
 
@@ -576,6 +601,12 @@ export default function LandlordPortal() {
                 No monthly settlement payouts compiled yet. Run EOM compiles on the Admin desk to generate landlord vouchers.
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="animate-fade-in">
+            <SettingsPage />
           </div>
         )}
 
