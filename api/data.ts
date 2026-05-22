@@ -37,6 +37,24 @@ export default async function handler(
         return res.status(400).json({ success: false, error: 'Malformed database state payload.' });
       }
 
+      // Safeguard: Preserve user passwords from the existing database state to prevent
+      // stale frontend localstorage state from reverting new password changes.
+      const existingDb = await getDb();
+      if (existingDb && Array.isArray(existingDb.users) && Array.isArray(state.users)) {
+        state.users = state.users.map((incomingUser: any) => {
+          const matchedUser = existingDb.users.find(
+            (u: any) => u.id === incomingUser.id || u.email.toLowerCase() === incomingUser.email.toLowerCase()
+          );
+          if (matchedUser && matchedUser.password) {
+            return {
+              ...incomingUser,
+              password: matchedUser.password
+            };
+          }
+          return incomingUser;
+        });
+      }
+
       await saveDb(state);
       return res.status(200).json({ success: true, message: 'Database successfully persisted.' });
     }

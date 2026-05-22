@@ -289,6 +289,9 @@ export default function SettingsPage() {
     if (user?.email) {
       const result = await verifyAndChangePassword(user.email, otp, newPassword);
       if (result.success) {
+        if (user.id) {
+          updateUser(user.id, { password: newPassword });
+        }
         addToast('Password updated successfully!', 'success');
         setOtp('');
         setSandboxOtp(null);
@@ -395,6 +398,9 @@ export default function SettingsPage() {
         role: formRole,
         isActive: formIsActive,
       };
+      if (formPassword.trim().length >= 6) {
+        updates.password = formPassword.trim();
+      }
       updateUser(selectedUser.id, updates);
 
       if (formPassword.trim().length >= 6) {
@@ -444,6 +450,7 @@ export default function SettingsPage() {
         phone: formPhone,
         role: formRole,
         isActive: formIsActive,
+        password: formPassword,
         createdAt: new Date().toISOString().split('T')[0],
       };
 
@@ -505,6 +512,7 @@ export default function SettingsPage() {
       });
 
       if (res.data.success) {
+        updateUser(resetTargetUser.id, { password: resetNewPassword });
         addAuditLog({ 
           id: `AUD-${Math.random().toString(36).substring(2, 7).toUpperCase()}`, 
           userId: user?.id || 'admin', 

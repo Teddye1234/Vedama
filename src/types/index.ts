@@ -13,6 +13,7 @@ export interface User {
   avatar?: string;
   isActive: boolean;
   createdAt: string;
+  password?: string;
 }
 
 export type PlotSize = '50x100' | '100x100' | 'quarter_acre' | 'half_acre' | 'full_acre' | 'multi_acre';

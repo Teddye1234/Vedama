@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Shield, ArrowRight, AlertCircle, ArrowLeft, Mail, Phone, Lock, User, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useToastStore } from '../components/ui/Toast';
+import { useDataStore } from '../stores/dataStore';
 import Logo from '../components/ui/Logo';
 
 type Mode = 'signin' | 'signup' | 'forgot';
@@ -95,6 +96,7 @@ export default function LoginPage() {
     const result = await login(email, password);
     if (result.success) {
       addToast('Welcome back! Redirecting...', 'success');
+      await useDataStore.getState().loadFromServer();
       const u = useAuthStore.getState().user;
       if (u?.role === 'client') navigate('/client');
       else if (u?.role === 'landlord') navigate('/landlord');
@@ -187,6 +189,7 @@ export default function LoginPage() {
       const result = await verifyAndSignUp(signupName, signupEmail, signupPhone, signupPassword, otpCode);
       if (result.success) {
         addToast('Account created! Welcome to Vedama! 🎉', 'success');
+        await useDataStore.getState().loadFromServer();
         navigate('/client');
       } else {
         setError(result.error || 'OTP verification failed. Check the code and try again.');
@@ -196,6 +199,7 @@ export default function LoginPage() {
       const result = await verifyAndResetPassword(resetEmail, otpCode, resetPassword);
       if (result.success) {
         addToast('Password reset! You can now sign in.', 'success');
+        await useDataStore.getState().loadFromServer();
         setIsOtpStep(false);
         setMode('signin');
         setIsLoading(false);
